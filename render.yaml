@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: backend
+    runtime: python
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11 # 사용하는 Python 버전에 맞게 수정
+      # Firestore 서비스 계정 키를 환경 변수로 설정하는 것이 좋습니다.
+      # Render 대시보드에서 SECRET_FILE 타입으로 설정 가능
+      # - key: GOOGLE_APPLICATION_CREDENTIALS
+      #   value: /etc/secrets/serviceAccountKey.json # Render Secret File 경로 예시
+
+  - type: web
+    name: frontend
+    runtime: static
+    rootDir: frontend
+    # frontend 빌드 과정이 필요하면 여기에 추가
+    # buildCommand: "npm install && npm run build"
+    # publishDir: frontend/dist # 빌드 결과물 디렉토리 

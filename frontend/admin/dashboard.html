@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Dashboard - KINS URL Checker</title>
+
+    <!-- 관리자 레이아웃 스크립트 로드 -->
+    <script src="../common/admin-layout-loader.js" defer></script>
+
+    <!-- 대시보드 전용 head 요소들 -->
+</head>
+<body>
+    <!-- 이 body 내용 전체가 레이아웃의 'page-content' 플레이스홀더에 삽입됩니다 -->
+
+    <div class="container-fluid py-4">
+        <!-- 카드 섹션 -->
+        <div class="row">
+            <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+                <div class="card">
+                    <div class="card-header p-3 pt-2">
+                        <div class="icon icon-lg icon-shape bg-gradient-primary shadow-primary text-center border-radius-xl mt-n4 position-absolute">
+                            <i class="material-symbols-rounded opacity-10">person</i>
+                        </div>
+                        <div class="text-end pt-1">
+                            <p class="text-sm mb-0 text-capitalize">사용자</p>
+                            <h4 class="mb-0">1,320</h4> <!-- 실제 데이터로 변경 필요 -->
+                        </div>
+                    </div>
+                    <hr class="dark horizontal my-0">
+                    <div class="card-footer p-3">
+                        <p class="mb-0"><span class="text-success text-sm font-weight-bolder">+3% </span>지난달 대비</p> <!-- 실제 데이터로 변경 필요 -->
+                    </div>
+                </div>
+            </div>
+            <!-- 여기에 다른 카드들 추가 -->
+            <!-- 예시: -->
+            <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
+              <div class="card">
+                <div class="card-header p-3 pt-2">
+                  <div class="icon icon-lg icon-shape bg-gradient-success shadow-success text-center border-radius-xl mt-n4 position-absolute">
+                    <i class="material-symbols-rounded">receipt_long</i>
+                  </div>
+                  <div class="text-end pt-1">
+                    <p class="text-sm mb-0 text-capitalize">오늘 등록 URL</p>
+                    <h4 class="mb-0">52</h4>
+                  </div>
+                </div>
+                <hr class="dark horizontal my-0">
+                <div class="card-footer p-3">
+                  <p class="mb-0"><span class="text-danger text-sm font-weight-bolder">-2%</span> 어제 대비</p>
+                </div>
+              </div>
+            </div>
+            <!-- ... -->
+        </div>
+
+        <!-- 차트 섹션 -->
+        <div class="row mt-4">
+            <div class="col-lg-7 col-md-6 mb-md-0 mb-4">
+                <div class="card z-index-2 ">
+                    <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                        <div class="bg-gradient-primary shadow-primary border-radius-lg py-3 pe-1">
+                            <div class="chart">
+                                <canvas id="chart-bars" class="chart-canvas" height="170"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="mb-0 ">웹사이트 조회수</h6>
+                        <p class="text-sm ">지난 캠페인 성과</p>
+                        <hr class="dark horizontal">
+                        <div class="d-flex ">
+                            <i class="material-icons text-sm my-auto me-1">schedule</i>
+                            <p class="mb-0 text-sm"> 2일 전 캠페인 발송됨 </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5 col-md-6">
+                 <div class="card z-index-2 ">
+                     <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent">
+                         <div class="bg-gradient-success shadow-success border-radius-lg py-3 pe-1">
+                             <div class="chart">
+                                 <canvas id="chart-line" class="chart-canvas" height="170"></canvas>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="card-body">
+                         <h6 class="mb-0 "> 일일 판매량 </h6>
+                         <p class="text-sm "> (<span class="font-weight-bolder">+15%</span>) 오늘 판매량 증가. </p>
+                         <hr class="dark horizontal">
+                         <div class="d-flex ">
+                             <i class="material-icons text-sm my-auto me-1">schedule</i>
+                             <p class="mb-0 text-sm"> 4분 전 업데이트됨 </p>
+                         </div>
+                     </div>
+                 </div>
+            </div>
+        </div>
+
+        <!-- 테이블 등 다른 섹션들 -->
+
+    </div>
+
+    <!-- 대시보드 전용 스크립트 -->
+    <script>
+      function initializeDashboardCharts() {
+        console.log("Initializing dashboard charts...");
+        // 대시보드 차트 스크립트 (chart-line)
+        var ctx1 = document.getElementById("chart-line")?.getContext("2d");
+        if (ctx1) {
+            console.log("Initializing chart-line");
+            var gradientStroke1 = ctx1.createLinearGradient(0, 230, 0, 50);
+            gradientStroke1.addColorStop(1, 'rgba(70, 188, 111, 0.2)');
+            gradientStroke1.addColorStop(0.2, 'rgba(70, 188, 111, 0.0)');
+            gradientStroke1.addColorStop(0, 'rgba(70, 188, 111, 0)'); // 녹색 계열
+
+            new Chart(ctx1, {
+                type: "line",
+                data: {
+                    labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                    datasets: [{
+                        label: "Mobile apps",
+                        tension: 0.4,
+                        borderWidth: 0,
+                        pointRadius: 5,
+                        pointBackgroundColor: "#46bc6f",
+                        pointBorderColor: "transparent",
+                        borderColor: "#46bc6f", // 녹색
+                        borderWidth: 3,
+                        backgroundColor: gradientStroke1,
+                        fill: true,
+                        data: [50, 40, 300, 220, 500, 250, 400, 230, 500],
+                        maxBarThickness: 6
+                    }],
+                },
+                 options: { /* ... 차트 옵션 ... */ }
+            });
+        } else {
+          console.warn("Could not find canvas with id 'chart-line'");
+        }
+
+        // (chart-bars) 스크립트 추가
+        var ctx2 = document.getElementById("chart-bars")?.getContext("2d");
+        if (ctx2) {
+            console.log("Initializing chart-bars");
+            new Chart(ctx2, {
+                type: "bar",
+                data: {
+                    labels: ["M", "T", "W", "T", "F", "S", "S"],
+                    datasets: [{
+                        label: "Sales",
+                        tension: 0.4,
+                        borderWidth: 0,
+                        borderRadius: 4,
+                        borderSkipped: false,
+                        backgroundColor: "rgba(255, 255, 255, .8)",
+                        data: [50, 20, 10, 22, 50, 10, 40],
+                        maxBarThickness: 6
+                    }],
+                },
+                options: { /* ... 차트 옵션 ... */ }
+            });
+        } else {
+          console.warn("Could not find canvas with id 'chart-bars'");
+        }
+
+        // 필요 시 이 페이지에 스크롤바 초기화 추가
+        var win = navigator.platform.indexOf('Win') > -1;
+        if (win && document.querySelector('#sidenav-scrollbar')) {
+          var options = { damping: '0.5' }
+          Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+          console.log("Sidenav scrollbar initialized.");
+        }
+      }
+      </script>
+
+</body>
+</html>
