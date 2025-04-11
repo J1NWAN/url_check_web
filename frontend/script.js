@@ -1,3 +1,4 @@
+/*
 // 백엔드 API 주소 (FastAPI 서버 주소)
 const BACKEND_URL = 'http://localhost:8000'; // 로컬 개발 환경
 // const BACKEND_URL = 'YOUR_RENDER_BACKEND_URL'; // Render 배포 시
@@ -17,3 +18,4 @@ async function fetchData() {
         dataDiv.textContent = '데이터를 불러오는 데 실패했습니다.';
     }
 } 
+*/
