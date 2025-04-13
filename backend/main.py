@@ -1,8 +1,18 @@
+import sys
+import os
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import firebase_admin
 from firebase_admin import credentials, firestore
+import logging
+
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 # Firebase 서비스 계정 키 파일 경로 (직접 수정 필요)
 CRED_PATH = "path/to/your/serviceAccountKey.json"
@@ -19,7 +29,11 @@ except Exception as e:
     db = None
 '''
 
-app = FastAPI()
+app = FastAPI(
+    title="URL Check Web API",
+    description="URL 확인 및 사용자 관리를 위한 FastAPI 기반 백엔드",
+    version="0.1.0"
+)
 
 # CORS 미들웨어 설정 추가
 origins = [
@@ -37,12 +51,18 @@ app.add_middleware(
     allow_headers=["*"],    # 모든 HTTP 헤더 허용
 )
 
+# 여기에 API 엔드포인트 추가
+from api.auth.auth_router import router as auth_router
+
+# 라우터 등록 (접두사 없이 직접 등록)
+app.include_router(auth_router)
+
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "URL Check Web API에 오신 것을 환영합니다!"}
 
 # 여기에 API 엔드포인트 추가
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 
