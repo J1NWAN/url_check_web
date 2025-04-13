@@ -8,7 +8,7 @@
         try {
             // --- 1. 관리자 레이아웃 가져오기 ---
             // /admin/ 디렉토리 내 HTML 파일 기준 상대 경로
-            const layoutPath = '../../common/layout/admin-layout.html';
+            const layoutPath = '../view/common/layout/admin-layout.html';
             const response = await fetch(layoutPath);
             if (!response.ok) {
                 throw new Error(`관리자 레이아웃 가져오기 실패: ${response.status} ${response.statusText} 경로: ${layoutPath}`);

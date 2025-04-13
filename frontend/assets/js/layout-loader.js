@@ -7,7 +7,7 @@
     const applyLayout = async () => {
         console.log("[레이아웃 로더] 레이아웃 적용 시작...");
         // HTML 파일(signin/signup) 기준 상대 경로
-        const layoutPath = '../../common/layout/auth-layout.html';
+        const layoutPath = '../view/common/layout/auth-layout.html';
         console.log(`[레이아웃 로더] 레이아웃 가져오는 중: ${layoutPath}`);
         try {
             // --- 1. 공통 레이아웃 가져오기 ---
