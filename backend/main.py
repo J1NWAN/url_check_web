@@ -3,8 +3,6 @@ import os
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import firebase_admin
-from firebase_admin import credentials, firestore
 import logging
 
 # 로깅 설정
@@ -14,20 +12,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Firebase 서비스 계정 키 파일 경로 (직접 수정 필요)
-CRED_PATH = "path/to/your/serviceAccountKey.json"
-
-# Firebase 초기화
-'''
-try:
-    cred = credentials.Certificate(CRED_PATH)
-    firebase_admin.initialize_app(cred)
-    db = firestore.client()
-    print("Firestore initialized successfully")
-except Exception as e:
-    print(f"Error initializing Firestore: {e}")
-    db = None
-'''
+# config/database.py에서 Firestore 초기화를 처리하므로 여기서는 제거
+from config.database import get_db
 
 app = FastAPI(
     title="URL Check Web API",
@@ -51,18 +37,19 @@ app.add_middleware(
     allow_headers=["*"],    # 모든 HTTP 헤더 허용
 )
 
-# 여기에 API 엔드포인트 추가
+# API 라우터 등록
 from api.auth.auth_router import router as auth_router
-
-# 라우터 등록 (접두사 없이 직접 등록)
 app.include_router(auth_router)
 
 @app.get("/")
 async def root():
     return {"message": "URL Check Web API에 오신 것을 환영합니다!"}
 
-# 여기에 API 엔드포인트 추가
-
 
 if __name__ == "__main__":
+    # 시작 시 데이터베이스 연결 확인
+    db = get_db()
+    if db is None:
+        logger.warning("Firestore 연결이 설정되지 않았습니다. 서비스 계정 키를 확인하세요.")
+    
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 

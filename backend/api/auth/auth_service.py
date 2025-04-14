@@ -58,10 +58,9 @@ async def create_user(user_data: UserCreate) -> UserResponse:
     # 사용자 데이터 준비 (비밀번호와 비밀번호 확인은 제외하고 해시된 비밀번호 저장)
     user_dict = user_data.model_dump(exclude={"password", "password_confirm"})
     user_dict.update({
-        "hashed_password": hashed_password,
+        "password": hashed_password,
         "created_at": datetime.now(),
         "updated_at": datetime.now(),
-        "active": True
     })
 
     try:
