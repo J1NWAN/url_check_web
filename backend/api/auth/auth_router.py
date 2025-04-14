@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
-from .auth_model import UserCreate, UserResponse
-from .auth_service import create_user
+from fastapi.security import OAuth2PasswordRequestForm
+from .auth_model import UserCreate, UserResponse, UserLogin, Token
+from .auth_service import create_user, login_user
 import logging
 
 # 로거 설정
@@ -19,9 +20,11 @@ async def register_user(user_data: UserCreate):
     """
     새로운 사용자 회원가입 엔드포인트.
     
+    - **userid**: 사용자 아이디 (4-20자, 영문자, 숫자, 밑줄(_)만 허용) (필수)
+    - **name**: 사용자 이름 (2-50자) (필수)
     - **email**: 유효한 이메일 주소 (필수)
     - **password**: 8자 이상의 암호, 대소문자, 숫자, 특수문자 포함 (필수)
-    - **username**: 사용자 이름 (선택 사항)
+    - **password_confirm**: 비밀번호 확인 (필수)
     
     성공 시 생성된 사용자 정보를 반환합니다(비밀번호 제외).
     """
@@ -36,4 +39,27 @@ async def register_user(user_data: UserCreate):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="회원가입 처리 중 오류가 발생했습니다."
+        )
+
+@router.post("/login", response_model=Token)
+async def login(login_data: UserLogin):
+    """
+    사용자 로그인 엔드포인트.
+    
+    - **userid**: 사용자 아이디 (필수)
+    - **password**: 사용자 비밀번호 (필수)
+    
+    성공 시 액세스 토큰과 사용자 정보를 반환합니다.
+    """
+    try:
+        token = await login_user(login_data)
+        return token
+    except HTTPException as e:
+        # HTTPException은 그대로 전파
+        raise e
+    except Exception as e:
+        logger.exception(f"로그인 처리 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="로그인 처리 중 오류가 발생했습니다."
         ) 

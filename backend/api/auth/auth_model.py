@@ -40,4 +40,15 @@ class UserResponse(BaseModel):
     id: str
     userid: str
     name: str
-    email: EmailStr 
+    email: EmailStr
+
+class UserLogin(BaseModel):
+    userid: str = Field(..., min_length=4, description="사용자 아이디")
+    password: str = Field(..., min_length=8, description="사용자 비밀번호")
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user_id: str
+    userid: str
+    name: str 

@@ -1,9 +1,9 @@
-from util.util import get_password_hash
+from util.util import get_password_hash, verify_password, create_access_token
 from config.database import get_db
-from api.auth.auth_model import UserCreate, UserResponse
+from api.auth.auth_model import UserCreate, UserResponse, UserLogin, Token
 from fastapi import HTTPException, status
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -84,4 +84,71 @@ async def create_user(user_data: UserCreate) -> UserResponse:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="사용자 등록 중 오류가 발생했습니다."
-        ) 
+        )
+
+async def login_user(login_data: UserLogin) -> Token:
+    """
+    사용자 로그인 처리 및 액세스 토큰 발급
+    
+    Args:
+        login_data: 로그인 정보 (아이디, 비밀번호)
+        
+    Returns:
+        액세스 토큰 및 사용자 정보가 담긴 응답
+        
+    Raises:
+        HTTPException: 데이터베이스 연결 오류, 로그인 실패(잘못된 아이디/비밀번호) 등
+    """
+    # 데이터베이스 연결
+    db = get_db()
+    if db is None:
+        logger.error("데이터베이스 연결 실패")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="데이터베이스 연결 오류가 발생했습니다."
+        )
+    
+    # 사용자 조회
+    users_ref = db.collection('user')
+    user_query = users_ref.where('userid', '==', login_data.userid).limit(1).stream()
+    
+    # 사용자 검증
+    user_doc = next((doc for doc in user_query), None)
+    
+    if not user_doc:
+        logger.warning(f"로그인 실패: 존재하지 않는 아이디 - {login_data.userid}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="아이디 또는 비밀번호가 올바르지 않습니다."
+        )
+    
+    # 사용자 데이터 가져오기
+    user_data = user_doc.to_dict()
+    
+    # 비밀번호 검증
+    if not verify_password(login_data.password, user_data.get("password")):
+        logger.warning(f"로그인 실패: 잘못된 비밀번호 - {login_data.userid}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="아이디 또는 비밀번호가 올바르지 않습니다."
+        )
+    
+    # 로그인 성공 처리
+    logger.info(f"로그인 성공: {login_data.userid}")
+    
+    # 토큰에 담을 데이터
+    token_data = {
+        "sub": user_doc.id,
+        "userid": user_data.get("userid"),
+        "name": user_data.get("name"),
+    }
+    
+    # 토큰 생성
+    access_token = create_access_token(token_data)
+    
+    return Token(
+        access_token=access_token,
+        user_id=user_doc.id,
+        userid=user_data.get("userid"),
+        name=user_data.get("name")
+    ) 
