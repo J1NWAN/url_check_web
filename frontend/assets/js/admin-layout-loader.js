@@ -96,6 +96,43 @@
         } finally {
             requestAnimationFrame(() => {
                 document.documentElement.style.visibility = 'visible';
+                
+                // 사이드네비게이션 활성화 스크립트 직접 삽입
+                const activationScript = document.createElement('script');
+                activationScript.textContent = `
+                  // 레이아웃 로드 후 사이드네비게이션 활성화
+                  (function() {
+                    console.log('사이드네비게이션 활성화 스크립트 실행');
+                    const path = window.location.pathname;
+                    console.log('현재 경로:', path);
+                    
+                    const navLinks = document.querySelectorAll('#sidenav-collapse-main .nav-link[data-nav-id]');
+                    console.log('네비게이션 링크 개수:', navLinks.length);
+                    
+                    navLinks.forEach(link => {
+                      const navId = link.getAttribute('data-nav-id');
+                      console.log('네비게이션 ID:', navId, '링크:', link.href);
+                      
+                      if (path === '/admin/' + navId || path.startsWith('/admin/' + navId + '/')) {
+                        link.classList.add('active', 'bg-gradient-dark', 'text-white');
+                        link.classList.remove('text-dark');
+                        console.log(navId + ' 네비게이션 활성화됨');
+                      }
+                      
+                      // 클릭 이벤트 추가
+                      link.addEventListener('click', function() {
+                        console.log(navId + ' 클릭됨');
+                        navLinks.forEach(l => {
+                          l.classList.remove('active', 'bg-gradient-dark', 'text-white');
+                          l.classList.add('text-dark');
+                        });
+                        this.classList.add('active', 'bg-gradient-dark', 'text-white');
+                        this.classList.remove('text-dark');
+                      });
+                    });
+                  })();
+                `;
+                document.body.appendChild(activationScript);
             });
         }
     };
