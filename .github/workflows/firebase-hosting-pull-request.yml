@@ -26,4 +26,4 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_URL_CHECK_KINS }}'
           channelId: live
           projectId: url-check-kins  # 여기에 실제 Firebase 프로젝트 ID 입력
-          entryPoint: '.'  # firebase.json이 있는 디렉토리 경로
+          entryPoint: 'frontend'  # firebase.json이 있는 디렉토리 경로
