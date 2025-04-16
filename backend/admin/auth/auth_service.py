@@ -1,6 +1,6 @@
 from util.util import get_password_hash, verify_password, create_access_token
 from config.database import get_db
-from auth.auth_model import UserCreate, UserResponse, UserLogin, Token
+from .auth_model import UserCreate, UserResponse, UserLogin, Token
 from fastapi import HTTPException, status
 import logging
 from datetime import datetime, timedelta

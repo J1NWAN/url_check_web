@@ -1,21 +1,31 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from .auth_model import UserCreate, UserResponse, UserLogin, Token
 from .auth_service import create_user, login_user
 import logging
+from config.templates import templates
 
 # 로거 설정
 logger = logging.getLogger(__name__)
 
 # 라우터 정의
-router = APIRouter(
-    prefix="/api/auth",
-    tags=["인증"],
-    responses={404: {"description": "찾을 수 없음"}},
-)
+router = APIRouter(tags=["인증"])
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+######################################################## 템플릿 반환 라우터 ########################################################
+# 로그인 화면
+@router.get("/auth/signin", tags=["로그인 화면"])
+async def signin_page(request: Request):
+    return templates.TemplateResponse("auth/signin.html", {"request": request})
+
+# 회원가입 화면
+@router.get("/auth/signup", tags=["회원가입 화면"])
+async def signup_page(request: Request):
+    return templates.TemplateResponse("auth/signup.html", {"request": request})
+
+######################################################## API 라우터 ########################################################
+# 회원가입 API
+@router.post("/api/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED, tags=["회원가입 API"])
 async def register_user(user_data: UserCreate):
     """
     새로운 사용자 회원가입 엔드포인트.
@@ -41,7 +51,8 @@ async def register_user(user_data: UserCreate):
             detail="회원가입 처리 중 오류가 발생했습니다."
         )
 
-@router.post("/login", response_model=Token)
+# 로그인 API
+@router.post("/api/login", response_model=Token, tags=["로그인 API"])
 async def login(login_data: UserLogin):
     """
     사용자 로그인 엔드포인트.
@@ -62,4 +73,4 @@ async def login(login_data: UserLogin):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="로그인 처리 중 오류가 발생했습니다."
-        ) 
+        )
