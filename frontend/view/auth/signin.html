@@ -57,7 +57,8 @@
         const loginButton = document.getElementById('loginButton');
         const loginError = document.getElementById('loginError');
         
-        loginButton.addEventListener('click', async function() {
+        // 로그인 처리 함수
+        async function attemptLogin() {
             const userid = document.getElementById('userid').value;
             const password = document.getElementById('password').value;
             
@@ -76,22 +77,35 @@
                     userid: userid,
                     password: password
                 });
-                
+                console.log(response);
                 if (response.data.access_token) {
                     // 토큰 저장
-                    localStorage.setItem('token', response.data.token);
+                    localStorage.setItem('token', response.data.access_token);
                     // 로그인 성공 후 대시보드로 리디렉션
                     window.location.href = '/';
                 } else {
                     throw new Error(response.data.message || '로그인에 실패했습니다.');
                 }
             } catch (error) {
-                loginError.textContent = error.response?.data?.message || error.message || '로그인 처리 중 오류가 발생했습니다.';
+                console.log(error);
+                // 백엔드에서 오는 오류 메시지 표시
+                loginError.textContent = error.response?.data?.detail || error.message || '로그인 처리 중 오류가 발생했습니다.';
                 loginError.style.display = 'block';
                 console.error('로그인 오류:', error);
             } finally {
                 loginButton.disabled = false;
                 loginButton.textContent = '로그인';
+            }
+        }
+        
+        // 로그인 버튼 클릭 이벤트
+        loginButton.addEventListener('click', attemptLogin);
+        
+        // 폼에서 엔터 키 이벤트 처리
+        loginForm.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // 기본 폼 제출 방지
+                attemptLogin();
             }
         });
     });

@@ -40,7 +40,7 @@ async def create_user(user_data: UserCreate) -> UserResponse:
         logger.warning(f"이미 등록된 아이디로 가입 시도: {user_data.userid}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="이미 등록된 아이디입니다."
+            detail=f"이미 사용 중인 아이디입니다: {user_data.userid}"
         )
     
     # 이메일 중복 확인
@@ -49,7 +49,7 @@ async def create_user(user_data: UserCreate) -> UserResponse:
         logger.warning(f"이미 등록된 이메일로 가입 시도: {user_data.email}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="이미 등록된 이메일입니다."
+            detail=f"이미 가입된 이메일 주소입니다: {user_data.email}"
         )
 
     # 비밀번호 해싱

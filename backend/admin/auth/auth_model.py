@@ -19,14 +19,12 @@ class UserCreate(BaseModel):
     @validator('password')
     def password_strength(cls, v):
         """비밀번호 강도 검증"""
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('비밀번호에는 최소 하나의 대문자가 포함되어야 합니다')
         if not re.search(r'[a-z]', v):
             raise ValueError('비밀번호에는 최소 하나의 소문자가 포함되어야 합니다')
         if not re.search(r'[0-9]', v):
             raise ValueError('비밀번호에는 최소 하나의 숫자가 포함되어야 합니다')
         if not re.search(r'[^A-Za-z0-9]', v):
-            raise ValueError('비밀번호에는 최소 하나의 특수문자가 포함되어야 합니다')
+            raise ValueError('비밀번호에는 최소 하나의 특수문자(예: !@#$%)가 포함되어야 합니다')
         return v
     
     @validator('password_confirm')
