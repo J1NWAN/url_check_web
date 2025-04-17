@@ -60,6 +60,14 @@ app.include_router(auth_router)
 from admin.dashboard.dashboard_router import router as dashboard_router
 app.include_router(dashboard_router)
 
+# 프로필 라우터 등록
+from admin.profile.profile_router import router as profile_router
+app.include_router(profile_router)
+
+# 시스템 라우터 등록
+from admin.system.system_router import router as system_router
+app.include_router(system_router)
+
 if __name__ == "__main__":
     # 시작 시 데이터베이스 연결 확인
     db = get_db()
