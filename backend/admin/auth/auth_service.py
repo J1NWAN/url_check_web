@@ -1,6 +1,6 @@
 from util.util import get_password_hash, verify_password, create_access_token
 from config.database import get_db
-from .auth_model import UserCreate, UserResponse, UserLogin, Token
+from .auth_model import UserCreate, UserResponse, UserLogin, Token, CurrentUser
 from fastapi import HTTPException, status
 import logging
 from datetime import datetime, timedelta
@@ -151,4 +151,69 @@ async def login_user(login_data: UserLogin) -> Token:
         user_id=user_doc.id,
         userid=user_data.get("userid"),
         name=user_data.get("name")
-    ) 
+    )
+
+async def get_current_user(user_id: str) -> CurrentUser:
+    """
+    사용자 ID로 현재 로그인된 사용자 정보를 조회합니다.
+    
+    Args:
+        user_id: 사용자 ID (Firestore 문서 ID)
+        
+    Returns:
+        현재 사용자 정보
+        
+    Raises:
+        HTTPException: 데이터베이스 연결 오류 또는 사용자를 찾을 수 없는 경우
+    """
+    # 데이터베이스 연결
+    db = get_db()
+    if db is None:
+        logger.error("데이터베이스 연결 실패")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="데이터베이스 연결 오류가 발생했습니다."
+        )
+    
+    try:
+        # 사용자 문서 조회
+        user_doc = db.collection('user').document(user_id).get()
+        
+        if not user_doc.exists:
+            logger.warning(f"사용자 정보 조회 실패: 존재하지 않는 사용자 ID - {user_id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="사용자 정보를 찾을 수 없습니다."
+            )
+        
+        # 사용자 데이터 가져오기
+        user_data = user_doc.to_dict()
+        
+        # 응답 데이터 준비
+        created_at = user_data.get("created_at")
+        if created_at and isinstance(created_at, datetime):
+            created_at_str = created_at.isoformat()
+        else:
+            created_at_str = None
+            
+        # 사용자 역할 확인 (기본값: 'user')
+        role = user_data.get("role", "user")
+        
+        return CurrentUser(
+            id=user_doc.id,
+            userid=user_data.get("userid"),
+            name=user_data.get("name"),
+            email=user_data.get("email"),
+            role=role,
+            created_at=created_at_str
+        )
+        
+    except HTTPException:
+        # 이미 처리된 HTTPException은 그대로 전파
+        raise
+    except Exception as e:
+        logger.error(f"사용자 정보 조회 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="사용자 정보 조회 중 오류가 발생했습니다."
+        ) 

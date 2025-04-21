@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from .auth_model import UserCreate, UserResponse, UserLogin, Token
-from .auth_service import create_user, login_user
+from .auth_model import UserCreate, UserResponse, UserLogin, Token, CurrentUser
+from .auth_service import create_user, login_user, get_current_user
+from util.util import verify_token
 import logging
 from config.templates import templates
 
@@ -73,4 +74,28 @@ async def login(login_data: UserLogin):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="로그인 처리 중 오류가 발생했습니다."
+        )
+
+# 현재 사용자 정보 조회 API
+@router.get("/api/auth/me", response_model=CurrentUser, tags=["사용자 정보 API"])
+async def get_me(user_id_and_payload = Depends(verify_token)):
+    """
+    현재 로그인한 사용자의 정보를 조회하는 엔드포인트.
+    
+    JWT 토큰 인증이 필요합니다(Authorization 헤더에 Bearer 토큰 포함).
+    
+    성공 시 현재 로그인한 사용자의 정보를 반환합니다.
+    """
+    try:
+        user_id, _ = user_id_and_payload
+        user = await get_current_user(user_id)
+        return user
+    except HTTPException as e:
+        # HTTPException은 그대로 전파
+        raise e
+    except Exception as e:
+        logger.exception(f"사용자 정보 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="사용자 정보 조회 중 오류가 발생했습니다."
         )

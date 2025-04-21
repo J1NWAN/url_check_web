@@ -49,4 +49,12 @@ class Token(BaseModel):
     token_type: str = "bearer"
     user_id: str
     userid: str
-    name: str 
+    name: str
+
+class CurrentUser(BaseModel):
+    id: str
+    userid: str
+    name: str
+    email: Optional[EmailStr] = None
+    role: Optional[str] = None
+    created_at: Optional[str] = None 
