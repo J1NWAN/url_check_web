@@ -2,7 +2,7 @@
 
 {% block title %}System - URL Checker{% endblock %}
 
-{% block breadcrumb_title %}System{% endblock %}
+{% block breadcrumb_title %}시스템{% endblock %}
 
 {% block page_styles %}
 <style>
@@ -11,432 +11,545 @@
     background-position: center;
     background-size: cover;
   }
+  
+  .hidden-item {
+    display: none;
+  }
+  
+  .show-more-btn {
+    width: 100%;
+    margin-top: 15px;
+  }
+  
+  .system-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+  }
+  
+  .system-modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 8px;
+  }
+  
+  .close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .close-modal:hover,
+  .close-modal:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  /* 입력 필드 테두리 스타일 */
+  .form-control {
+    border: 1px solid #d2d6da !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem;
+    line-height: 1.4rem;
+    border-radius: 0.375rem;
+  }
+  
+  .form-control:focus {
+    border-color: #7928CA !important;
+    box-shadow: 0 0 0 2px rgba(121, 40, 202, 0.25);
+  }
+  
+  .menu-item {
+    padding: 10px;
+    border-radius: 0.375rem;
+    background-color: #f8f9fa;
+    margin-bottom: 8px !important;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-  <div class="container-fluid py-2">
-    <div class="row">
-      <div class="col-12">
-        <div class="card my-4">
-          <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-            <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
-              <h6 class="text-white text-capitalize ps-3">Authors table</h6>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-7 mt-4">
+      <div class="card">
+        <div class="card-header pb-0 px-3">
+          <h6 class="mb-0 d-flex justify-content-between">
+            시스템 목록
+            <a class="btn bg-gradient-dark mb-0" href="javascript:;" id="add-system-btn"><i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;시스템 추가</a>
+          </h6>
+        </div>
+        <div class="card-body pt-4 p-3">
+          <ul class="list-group" id="system-list">
+            <!-- 시스템 목록이 여기에 동적으로 추가됩니다 -->
+          </ul>
+          <div id="loading-system" class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">로딩중...</span>
             </div>
           </div>
-          <div class="card-body px-0 pb-2">
-            <div class="table-responsive p-0">
-              <table class="table align-items-center mb-0">
-                <thead>
-                  <tr>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Author</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Function</th>
-                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Employed</th>
-                    <th class="text-secondary opacity-7"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2 py-1">
-                        <div>
-                          <img src="../assets/img/team-2.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user1">
-                        </div>
-                        <div class="d-flex flex-column justify-content-center">
-                          <h6 class="mb-0 text-sm">John Michael</h6>
-                          <p class="text-xs text-secondary mb-0">john@creative-tim.com</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-xs font-weight-bold mb-0">Manager</p>
-                      <p class="text-xs text-secondary mb-0">Organization</p>
-                    </td>
-                    <td class="align-middle text-center text-sm">
-                      <span class="badge badge-sm bg-gradient-success">Online</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <span class="text-secondary text-xs font-weight-bold">23/04/18</span>
-                    </td>
-                    <td class="align-middle">
-                      <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                        Edit
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2 py-1">
-                        <div>
-                          <img src="../assets/img/team-3.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user2">
-                        </div>
-                        <div class="d-flex flex-column justify-content-center">
-                          <h6 class="mb-0 text-sm">Alexa Liras</h6>
-                          <p class="text-xs text-secondary mb-0">alexa@creative-tim.com</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-xs font-weight-bold mb-0">Programator</p>
-                      <p class="text-xs text-secondary mb-0">Developer</p>
-                    </td>
-                    <td class="align-middle text-center text-sm">
-                      <span class="badge badge-sm bg-gradient-secondary">Offline</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <span class="text-secondary text-xs font-weight-bold">11/01/19</span>
-                    </td>
-                    <td class="align-middle">
-                      <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                        Edit
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2 py-1">
-                        <div>
-                          <img src="../assets/img/team-4.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user3">
-                        </div>
-                        <div class="d-flex flex-column justify-content-center">
-                          <h6 class="mb-0 text-sm">Laurent Perrier</h6>
-                          <p class="text-xs text-secondary mb-0">laurent@creative-tim.com</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-xs font-weight-bold mb-0">Executive</p>
-                      <p class="text-xs text-secondary mb-0">Projects</p>
-                    </td>
-                    <td class="align-middle text-center text-sm">
-                      <span class="badge badge-sm bg-gradient-success">Online</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <span class="text-secondary text-xs font-weight-bold">19/09/17</span>
-                    </td>
-                    <td class="align-middle">
-                      <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                        Edit
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2 py-1">
-                        <div>
-                          <img src="../assets/img/team-3.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user4">
-                        </div>
-                        <div class="d-flex flex-column justify-content-center">
-                          <h6 class="mb-0 text-sm">Michael Levi</h6>
-                          <p class="text-xs text-secondary mb-0">michael@creative-tim.com</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-xs font-weight-bold mb-0">Programator</p>
-                      <p class="text-xs text-secondary mb-0">Developer</p>
-                    </td>
-                    <td class="align-middle text-center text-sm">
-                      <span class="badge badge-sm bg-gradient-success">Online</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <span class="text-secondary text-xs font-weight-bold">24/12/08</span>
-                    </td>
-                    <td class="align-middle">
-                      <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                        Edit
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2 py-1">
-                        <div>
-                          <img src="../assets/img/team-2.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user5">
-                        </div>
-                        <div class="d-flex flex-column justify-content-center">
-                          <h6 class="mb-0 text-sm">Richard Gran</h6>
-                          <p class="text-xs text-secondary mb-0">richard@creative-tim.com</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-xs font-weight-bold mb-0">Manager</p>
-                      <p class="text-xs text-secondary mb-0">Executive</p>
-                    </td>
-                    <td class="align-middle text-center text-sm">
-                      <span class="badge badge-sm bg-gradient-secondary">Offline</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <span class="text-secondary text-xs font-weight-bold">04/10/21</span>
-                    </td>
-                    <td class="align-middle">
-                      <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                        Edit
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2 py-1">
-                        <div>
-                          <img src="../assets/img/team-4.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user6">
-                        </div>
-                        <div class="d-flex flex-column justify-content-center">
-                          <h6 class="mb-0 text-sm">Miriam Eric</h6>
-                          <p class="text-xs text-secondary mb-0">miriam@creative-tim.com</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-xs font-weight-bold mb-0">Programator</p>
-                      <p class="text-xs text-secondary mb-0">Developer</p>
-                    </td>
-                    <td class="align-middle text-center text-sm">
-                      <span class="badge badge-sm bg-gradient-secondary">Offline</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <span class="text-secondary text-xs font-weight-bold">14/09/20</span>
-                    </td>
-                    <td class="align-middle">
-                      <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                        Edit
-                      </a>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <div id="empty-system" class="text-center py-3" style="display: none;">
+            <p class="text-muted">등록된 시스템이 없습니다.</p>
           </div>
+          <button id="show-more-btn" class="btn bg-gradient-primary show-more-btn" style="display: none;">더보기</button>
         </div>
       </div>
     </div>
-    <div class="row">
-      <div class="col-12">
-        <div class="card my-4">
-          <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-            <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
-              <h6 class="text-white text-capitalize ps-3">Projects table</h6>
+    <div class="col-md-5 mt-4">
+      <div class="card mb-4">
+        <div class="card-header pb-0 px-3">
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="mb-0">최근 점검 결과</h6>
+            </div>
+            <div class="col-md-6 d-flex justify-content-start justify-content-md-end align-items-center">
+              <i class="material-symbols-rounded me-2 text-lg">date_range</i>
+              <small>23 - 30 March 2020</small>
             </div>
           </div>
-          <div class="card-body px-0 pb-2">
-            <div class="table-responsive p-0">
-              <table class="table align-items-center justify-content-center mb-0">
-                <thead>
-                  <tr>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Project</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Budget</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
-                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Completion</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2">
-                        <div>
-                          <img src="../assets/img/small-logos/logo-asana.svg" class="avatar avatar-sm rounded-circle me-2" alt="spotify">
-                        </div>
-                        <div class="my-auto">
-                          <h6 class="mb-0 text-sm">Asana</h6>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-sm font-weight-bold mb-0">$2,500</p>
-                    </td>
-                    <td>
-                      <span class="text-xs font-weight-bold">working</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <span class="me-2 text-xs font-weight-bold">60%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-info" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="align-middle">
-                      <button class="btn btn-link text-secondary mb-0">
-                        <i class="fa fa-ellipsis-v text-xs"></i>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2">
-                        <div>
-                          <img src="../assets/img/small-logos/github.svg" class="avatar avatar-sm rounded-circle me-2" alt="invision">
-                        </div>
-                        <div class="my-auto">
-                          <h6 class="mb-0 text-sm">Github</h6>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-sm font-weight-bold mb-0">$5,000</p>
-                    </td>
-                    <td>
-                      <span class="text-xs font-weight-bold">done</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <span class="me-2 text-xs font-weight-bold">100%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-success" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="align-middle">
-                      <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-ellipsis-v text-xs"></i>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2">
-                        <div>
-                          <img src="../assets/img/small-logos/logo-atlassian.svg" class="avatar avatar-sm rounded-circle me-2" alt="jira">
-                        </div>
-                        <div class="my-auto">
-                          <h6 class="mb-0 text-sm">Atlassian</h6>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-sm font-weight-bold mb-0">$3,400</p>
-                    </td>
-                    <td>
-                      <span class="text-xs font-weight-bold">canceled</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <span class="me-2 text-xs font-weight-bold">30%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-danger" role="progressbar" aria-valuenow="30" aria-valuemin="0" aria-valuemax="30" style="width: 30%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="align-middle">
-                      <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-ellipsis-v text-xs"></i>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2">
-                        <div>
-                          <img src="../assets/img/small-logos/bootstrap.svg" class="avatar avatar-sm rounded-circle me-2" alt="webdev">
-                        </div>
-                        <div class="my-auto">
-                          <h6 class="mb-0 text-sm">Bootstrap</h6>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-sm font-weight-bold mb-0">$14,000</p>
-                    </td>
-                    <td>
-                      <span class="text-xs font-weight-bold">working</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <span class="me-2 text-xs font-weight-bold">80%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-info" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="80" style="width: 80%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="align-middle">
-                      <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-ellipsis-v text-xs"></i>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2">
-                        <div>
-                          <img src="../assets/img/small-logos/logo-slack.svg" class="avatar avatar-sm rounded-circle me-2" alt="slack">
-                        </div>
-                        <div class="my-auto">
-                          <h6 class="mb-0 text-sm">Slack</h6>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-sm font-weight-bold mb-0">$1,000</p>
-                    </td>
-                    <td>
-                      <span class="text-xs font-weight-bold">canceled</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <span class="me-2 text-xs font-weight-bold">0%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="0" style="width: 0%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="align-middle">
-                      <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-ellipsis-v text-xs"></i>
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <div class="d-flex px-2">
-                        <div>
-                          <img src="../assets/img/small-logos/devto.svg" class="avatar avatar-sm rounded-circle me-2" alt="xd">
-                        </div>
-                        <div class="my-auto">
-                          <h6 class="mb-0 text-sm">Devto</h6>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p class="text-sm font-weight-bold mb-0">$2,300</p>
-                    </td>
-                    <td>
-                      <span class="text-xs font-weight-bold">done</span>
-                    </td>
-                    <td class="align-middle text-center">
-                      <div class="d-flex align-items-center justify-content-center">
-                        <span class="me-2 text-xs font-weight-bold">100%</span>
-                        <div>
-                          <div class="progress">
-                            <div class="progress-bar bg-gradient-success" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="align-middle">
-                      <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-ellipsis-v text-xs"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+        </div>
+        <div class="card-body pt-4 p-3">
+          <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Newest</h6>
+          <ul class="list-group">
+            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+              <div class="d-flex align-items-center">
+                <button class="btn btn-icon-only btn-rounded btn-outline-danger mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_more</i></button>
+                <div class="d-flex flex-column">
+                  <h6 class="mb-1 text-dark text-sm">Netflix</h6>
+                  <span class="text-xs">27 March 2020, at 12:30 PM</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center text-danger text-gradient text-sm font-weight-bold">
+                - $ 2,500
+              </div>
+            </li>
+            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+              <div class="d-flex align-items-center">
+                <button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_less</i></button>
+                <div class="d-flex flex-column">
+                  <h6 class="mb-1 text-dark text-sm">Apple</h6>
+                  <span class="text-xs">27 March 2020, at 04:30 AM</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center text-success text-gradient text-sm font-weight-bold">
+                + $ 2,000
+              </div>
+            </li>
+          </ul>
+          <h6 class="text-uppercase text-body text-xs font-weight-bolder my-3">Yesterday</h6>
+          <ul class="list-group">
+            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+              <div class="d-flex align-items-center">
+                <button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_less</i></button>
+                <div class="d-flex flex-column">
+                  <h6 class="mb-1 text-dark text-sm">Stripe</h6>
+                  <span class="text-xs">26 March 2020, at 13:45 PM</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center text-success text-gradient text-sm font-weight-bold">
+                + $ 750
+              </div>
+            </li>
+            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+              <div class="d-flex align-items-center">
+                <button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_less</i></button>
+                <div class="d-flex flex-column">
+                  <h6 class="mb-1 text-dark text-sm">HubSpot</h6>
+                  <span class="text-xs">26 March 2020, at 12:30 PM</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center text-success text-gradient text-sm font-weight-bold">
+                + $ 1,000
+              </div>
+            </li>
+            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+              <div class="d-flex align-items-center">
+                <button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_less</i></button>
+                <div class="d-flex flex-column">
+                  <h6 class="mb-1 text-dark text-sm">Creative Tim</h6>
+                  <span class="text-xs">26 March 2020, at 08:30 AM</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center text-success text-gradient text-sm font-weight-bold">
+                + $ 2,500
+              </div>
+            </li>
+            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
+              <div class="d-flex align-items-center">
+                <button class="btn btn-icon-only btn-rounded btn-outline-dark mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">priority_high</i></button>
+                <div class="d-flex flex-column">
+                  <h6 class="mb-1 text-dark text-sm">Webflow</h6>
+                  <span class="text-xs">26 March 2020, at 05:00 AM</span>
+                </div>
+              </div>
+              <div class="d-flex align-items-center text-dark text-sm font-weight-bold">
+                Pending
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
   </div>
+</div>
+
+<!-- 시스템 추가/수정 모달 -->
+<div id="system-modal" class="system-modal">
+  <div class="system-modal-content">
+    <span class="close-modal">&times;</span>
+    <h5 id="system-modal-title">시스템 추가</h5>
+    <form id="system-form">
+      <input type="hidden" id="system-id" name="system-id">
+      <div class="form-group">
+        <label for="eng-name">시스템 영문명</label>
+        <input type="text" class="form-control" id="eng-name" name="eng-name" required>
+      </div>
+      <div class="form-group">
+        <label for="kor-name">시스템 한글명</label>
+        <input type="text" class="form-control" id="kor-name" name="kor-name" required>
+      </div>
+      <div class="form-group">
+        <label for="url">시스템 URL (도메인)</label>
+        <input type="url" class="form-control" id="url" name="url" required placeholder="도메인만 입력해주세요 (예: https://example.com)">
+        <small class="form-text text-muted">도메인만 입력해주세요. 경로는 메뉴에서 지정합니다.</small>
+      </div>
+      <div class="form-group">
+        <div class="d-flex justify-content-between align-items-center">
+          <label class="mb-0">메뉴 목록</label>
+          <button type="button" class="btn btn-sm bg-gradient-info mt-2 mb-2" id="add-menu-btn">
+            <i class="material-symbols-rounded">add</i> 메뉴 추가
+          </button>
+        </div>
+        <div id="menu-container">
+          <!-- 메뉴 항목이 동적으로 추가됩니다 -->
+        </div>
+      </div>
+      <div class="d-flex justify-content-end mt-4">
+        <button type="button" class="btn btn-secondary me-2" id="cancel-system-btn">취소</button>
+        <button type="submit" class="btn bg-gradient-primary" id="save-system-btn">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 요소 참조
+    const systemList = document.getElementById('system-list');
+    const loadingSystem = document.getElementById('loading-system');
+    const emptySystem = document.getElementById('empty-system');
+    const showMoreBtn = document.getElementById('show-more-btn');
+    const systemModal = document.getElementById('system-modal');
+    const systemForm = document.getElementById('system-form');
+    const systemModalTitle = document.getElementById('system-modal-title');
+    const systemId = document.getElementById('system-id');
+    const addSystemBtn = document.getElementById('add-system-btn');
+    const cancelSystemBtn = document.getElementById('cancel-system-btn');
+    const closeModal = document.querySelector('.close-modal');
+    const menuContainer = document.getElementById('menu-container');
+    const addMenuBtn = document.getElementById('add-menu-btn');
+    
+    // 메뉴 추가 버튼 이벤트 리스너
+    addMenuBtn.addEventListener('click', function() {
+      addMenuRow();
+    });
+    
+    // 메뉴 행 추가 함수
+    function addMenuRow(menuName = '', menuPath = '') {
+      const menuItem = document.createElement('div');
+      menuItem.className = 'menu-item row mb-2';
+      menuItem.innerHTML = `
+        <div class="col-md-5 ps-0">
+          <input type="text" class="form-control menu-name" placeholder="메뉴명" value="${menuName}" required>
+        </div>
+        <div class="col-md-6 ps-0">
+          <input type="text" class="form-control menu-path" placeholder="URL 경로 (예: /dashboard)" value="${menuPath}" required>
+        </div>
+        <div class="col-md-1 ps-0">
+          <button type="button" class="btn btn-danger btn-sm delete-menu mt-1 mb-0"><i class="material-symbols-rounded">remove</i></button>
+        </div>
+      `;
+      
+      // 삭제 버튼 이벤트 추가
+      const deleteBtn = menuItem.querySelector('.delete-menu');
+      deleteBtn.addEventListener('click', function() {
+        menuItem.remove();
+      });
+      
+      menuContainer.appendChild(menuItem);
+    }
+    
+    // 모달 닫기
+    function closeSystemModal() {
+      systemModal.style.display = 'none';
+      systemForm.reset();
+      
+      // 메뉴 컨테이너 초기화
+      menuContainer.innerHTML = '';
+      addMenuRow(); // 기본 메뉴 행 하나 추가
+    }
+    
+    // 모달 열기 이벤트
+    addSystemBtn.addEventListener('click', function() {
+      systemModalTitle.textContent = '시스템 추가';
+      systemId.value = '';
+      
+      // 메뉴 컨테이너 초기화
+      menuContainer.innerHTML = '';
+      addMenuRow(); // 기본 메뉴 행 하나 추가
+      
+      systemModal.style.display = 'block';
+    });
+    
+    // 모달 닫기 이벤트
+    closeModal.addEventListener('click', closeSystemModal);
+    cancelSystemBtn.addEventListener('click', closeSystemModal);
+    window.addEventListener('click', function(event) {
+      if (event.target === systemModal) {
+        closeSystemModal();
+      }
+    });
+    
+    // 시스템 목록 조회
+    async function fetchSystems() {
+      try {
+        loadingSystem.style.display = 'block';
+        emptySystem.style.display = 'none';
+        systemList.innerHTML = '';
+        
+        const response = await fetch('/api/systems');
+        
+        if (!response.ok) {
+          throw new Error('시스템 목록을 가져오는 중 오류가 발생했습니다.');
+        }
+        
+        const systems = await response.json();
+        
+        loadingSystem.style.display = 'none';
+        
+        if (systems.length === 0) {
+          emptySystem.style.display = 'block';
+          showMoreBtn.style.display = 'none';
+          return;
+        }
+        
+        renderSystems(systems);
+      } catch (error) {
+        console.error('Error:', error);
+        loadingSystem.style.display = 'none';
+        emptySystem.textContent = '시스템 목록을 불러오는 중 오류가 발생했습니다.';
+        emptySystem.style.display = 'block';
+      }
+    }
+    
+    // 시스템 목록 렌더링
+    function renderSystems(systems) {
+      systemList.innerHTML = '';
+      
+      systems.forEach((system, index) => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item border-0 d-flex p-4 mb-2 ' + (index > 0 ? 'mt-3 ' : '') + 'bg-gray-100 border-radius-lg';
+        
+        if (index >= 5) {
+          li.classList.add('hidden-item');
+        }
+        
+        // 메뉴 목록 HTML 생성
+        let menusHTML = '';
+        if (system.menus && system.menus.length > 0) {
+          menusHTML = '<ul class="mb-0 ps-3">';
+          system.menus.forEach(menu => {
+            menusHTML += `<li><small>${menu.name}: ${system.url}${menu.path}</small></li>`;
+          });
+          menusHTML += '</ul>';
+        } else {
+          menusHTML = '<span class="text-muted">등록된 메뉴 없음</span>';
+        }
+        
+        li.innerHTML = `
+          <div class="d-flex flex-column">
+            <h6 class="mb-3 text-sm">${system.kor_name}</h6>
+            <span class="mb-2 text-xs">시스템 영문명: <span class="text-dark font-weight-bold ms-sm-2">${system.eng_name}</span></span>
+            <span class="mb-2 text-xs">URL: <a href="${system.url}" target="_blank" class="text-dark ms-sm-2 font-weight-bold">${system.url}</a></span>
+            <span class="mb-2 text-xs">점검대상 메뉴 수: <span class="text-dark ms-sm-2 font-weight-bold">${system.menus.length}개</span></span>
+          </div>
+          <div class="ms-auto text-end">
+            <a class="btn btn-link text-danger text-gradient px-3 mb-0" href="javascript:;" data-id="${system.id}" onclick="deleteSystem('${system.id}')"><i class="material-symbols-rounded text-sm me-2">delete</i>삭제</a>
+            <a class="btn btn-link text-dark px-3 mb-0" href="javascript:;" data-id="${system.id}" onclick="editSystem('${system.id}')"><i class="material-symbols-rounded text-sm me-2">edit</i>수정</a>
+          </div>
+        `;
+        
+        systemList.appendChild(li);
+      });
+      
+      // 더보기 버튼 표시 여부 설정
+      if (systems.length > 5) {
+        showMoreBtn.style.display = 'block';
+      } else {
+        showMoreBtn.style.display = 'none';
+      }
+    }
+    
+    // 시스템 삭제
+    window.deleteSystem = async function(id) {
+      if (!confirm('정말로 이 시스템을 삭제하시겠습니까?')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/systems/${id}`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+          throw new Error('시스템 삭제 중 오류가 발생했습니다.');
+        }
+        
+        // 목록 새로고침
+        fetchSystems();
+      } catch (error) {
+        console.error('Error:', error);
+        alert('시스템 삭제 중 오류가 발생했습니다.');
+      }
+    };
+    
+    // 시스템 수정
+    window.editSystem = async function(id) {
+      try {
+        const response = await fetch(`/api/systems/${id}`);
+        
+        if (!response.ok) {
+          throw new Error('시스템 정보를 가져오는 중 오류가 발생했습니다.');
+        }
+        
+        const system = await response.json();
+        
+        // 폼에 데이터 채우기
+        systemId.value = system.id;
+        document.getElementById('eng-name').value = system.eng_name;
+        document.getElementById('kor-name').value = system.kor_name;
+        document.getElementById('url').value = system.url;
+        
+        // 메뉴 컨테이너 초기화
+        menuContainer.innerHTML = '';
+        
+        // 메뉴 정보가 있으면 메뉴 행 추가
+        if (system.menus && system.menus.length > 0) {
+          system.menus.forEach(menu => {
+            addMenuRow(menu.name, menu.path);
+          });
+        } else {
+          // 메뉴가 없으면 빈 행 하나 추가
+          addMenuRow();
+        }
+        
+        // 모달 제목 변경 및 표시
+        systemModalTitle.textContent = '시스템 수정';
+        systemModal.style.display = 'block';
+      } catch (error) {
+        console.error('Error:', error);
+        alert('시스템 정보를 가져오는 중 오류가 발생했습니다.');
+      }
+    };
+    
+    // 시스템 저장 (추가/수정)
+    systemForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const id = systemId.value;
+      const isUpdate = id !== '';
+      
+      // 폼 데이터 수집
+      const engName = document.getElementById('eng-name').value;
+      const korName = document.getElementById('kor-name').value;
+      const url = document.getElementById('url').value;
+      
+      // 메뉴 데이터 수집
+      const menuItems = document.querySelectorAll('.menu-item');
+      const menus = [];
+      
+      menuItems.forEach(item => {
+        const menuName = item.querySelector('.menu-name').value.trim();
+        const menuPath = item.querySelector('.menu-path').value.trim();
+        
+        if (menuName && menuPath) {
+          menus.push({
+            name: menuName,
+            path: menuPath
+          });
+        }
+      });
+      
+      // 요청 데이터 구성
+      const data = {
+        eng_name: engName,
+        kor_name: korName,
+        url: url,
+        menus: menus
+      };
+      
+      // 추가 시 생성자 정보 추가
+      if (!isUpdate) {
+        data.created_by = "system"; // 실제 사용자 ID로 대체해야 함
+      } else {
+        data.updated_by = "system"; // 실제 사용자 ID로 대체해야 함
+      }
+      
+      try {
+        const response = await fetch(isUpdate ? `/api/systems/${id}` : '/api/systems', {
+          method: isUpdate ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`시스템 ${isUpdate ? '수정' : '추가'} 중 오류가 발생했습니다.`);
+        }
+        
+        // 모달 닫기
+        closeSystemModal();
+        
+        // 목록 새로고침
+        fetchSystems();
+      } catch (error) {
+        console.error('Error:', error);
+        alert(`시스템 ${isUpdate ? '수정' : '추가'} 중 오류가 발생했습니다.`);
+      }
+    });
+    
+    // 더보기 버튼 클릭 이벤트
+    showMoreBtn.addEventListener('click', function() {
+      // 숨겨진 아이템들 모두 표시
+      const hiddenItems = document.querySelectorAll('#system-list li.hidden-item');
+      hiddenItems.forEach(item => {
+        item.classList.remove('hidden-item');
+      });
+      
+      // 더보기 버튼 숨김
+      this.style.display = 'none';
+    });
+    
+    // 초기 데이터 로드
+    fetchSystems();
+  });
+</script>
 {% endblock %}
