@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Request, status, Path
+from fastapi import APIRouter, HTTPException, Request, status, Path, Query
 from fastapi.responses import JSONResponse
 import logging
 from typing import List
 
 from config.templates import templates
-from .system_model import SystemCreate, SystemResponse, SystemUpdate
-from .system_service import create_system, get_systems, get_system, update_system, delete_system
+from .system_model import SystemCreate, SystemResponse, SystemUpdate, SystemInspectionResponse
+from .system_service import create_system, get_systems, get_system, update_system, delete_system, inspect_system, get_system_inspections
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -97,4 +97,48 @@ async def delete_system_api(system_id: str = Path(..., description="삭제할 �
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"시스템 삭제 중 오류가 발생했습니다: {str(e)}"
+        )
+
+# 시스템 점검 API
+@router.post("/api/systems/{system_id}/inspect", response_model=SystemInspectionResponse)
+async def inspect_system_api(
+    system_id: str = Path(..., description="점검할 시스템 ID"),
+    inspection_type: str = Query("자동", description="점검 유형 (자동 또는 수동)")
+):
+    try:
+        # TODO: 실제 사용자 ID를 가져오는 로직으로 변경 필요
+        created_by = "system"
+        
+        # 점검 유형 유효성 검사
+        if inspection_type not in ["자동", "수동"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="점검 유형은 '자동' 또는 '수동'이어야 합니다."
+            )
+        
+        return await inspect_system(system_id, inspection_type, created_by)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"시스템 점검 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"시스템 점검 중 오류가 발생했습니다: {str(e)}"
+        )
+
+# 시스템 점검 이력 조회 API
+@router.get("/api/systems/{system_id}/inspections", response_model=List[SystemInspectionResponse])
+async def get_system_inspections_api(
+    system_id: str = Path(..., description="점검 이력을 조회할 시스템 ID"),
+    limit: int = Query(10, description="조회할 이력 개수", ge=1, le=100)
+):
+    try:
+        return await get_system_inspections(system_id, limit)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"시스템 점검 이력 조회 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"시스템 점검 이력 조회 중 오류가 발생했습니다: {str(e)}"
         )

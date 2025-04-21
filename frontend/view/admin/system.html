@@ -93,7 +93,10 @@
         <div class="card-header pb-0 px-3">
           <h6 class="mb-0 d-flex justify-content-between">
             시스템 목록
-            <a class="btn bg-gradient-dark mb-0" href="javascript:;" id="add-system-btn"><i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;시스템 추가</a>
+            <div class="d-flex justify-content-end">
+              <a class="btn bg-gradient-dark mb-0 me-2" href="javascript:;" id="add-system-btn"><i class="material-symbols-rounded text-sm">add</i>&nbsp;&nbsp;시스템 추가</a>
+              <a class="btn bg-gradient-dark mb-0" href="javascript:;" id="check-system-btn"><i class="material-symbols-rounded text-sm">check</i>&nbsp;&nbsp;전체 점검</a>
+            </div>
           </h6>
         </div>
         <div class="card-body pt-4 p-3">
@@ -118,10 +121,6 @@
           <div class="row">
             <div class="col-md-6">
               <h6 class="mb-0">최근 점검 결과</h6>
-            </div>
-            <div class="col-md-6 d-flex justify-content-start justify-content-md-end align-items-center">
-              <i class="material-symbols-rounded me-2 text-lg">date_range</i>
-              <small>23 - 30 March 2020</small>
             </div>
           </div>
         </div>
@@ -249,6 +248,9 @@
   </div>
 </div>
 
+<!-- SweetAlert2 추가 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     // 요소 참조
@@ -265,6 +267,7 @@
     const closeModal = document.querySelector('.close-modal');
     const menuContainer = document.getElementById('menu-container');
     const addMenuBtn = document.getElementById('add-menu-btn');
+    const checkSystemBtn = document.getElementById('check-system-btn');
     
     // 메뉴 추가 버튼 이벤트 리스너
     addMenuBtn.addEventListener('click', function() {
@@ -393,6 +396,7 @@
           <div class="ms-auto text-end">
             <a class="btn btn-link text-danger text-gradient px-3 mb-0" href="javascript:;" data-id="${system.id}" onclick="deleteSystem('${system.id}')"><i class="material-symbols-rounded text-sm me-2">delete</i>삭제</a>
             <a class="btn btn-link text-dark px-3 mb-0" href="javascript:;" data-id="${system.id}" onclick="editSystem('${system.id}')"><i class="material-symbols-rounded text-sm me-2">edit</i>수정</a>
+            <a class="btn btn-link text-dark px-3 mb-0" href="javascript:;" data-id="${system.id}" onclick="inspectSystem('${system.id}', '${system.kor_name}')"><i class="material-symbols-rounded text-sm me-2">check</i>점검</a>
           </div>
         `;
         
@@ -404,6 +408,158 @@
         showMoreBtn.style.display = 'block';
       } else {
         showMoreBtn.style.display = 'none';
+      }
+    }
+    
+    // 시스템 점검 함수
+    window.inspectSystem = function(id, name) {
+      Swal.fire({
+        title: `${name} 점검`,
+        text: '점검 방식을 선택해주세요',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '자동',
+        cancelButtonText: '수동',
+        reverseButtons: true
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // 자동 점검 선택 시
+          doInspection(id, name, "자동");
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          // 수동 점검 선택 시
+          doInspection(id, name, "수동");
+        }
+      });
+    };
+    
+    // 전체 시스템 점검 버튼 이벤트
+    checkSystemBtn.addEventListener('click', function() {
+      Swal.fire({
+        title: '전체 시스템 점검',
+        text: '모든 시스템을 점검하시겠습니까?',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '예',
+        cancelButtonText: '아니오'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            const response = await fetch('/api/systems');
+            if (!response.ok) {
+              throw new Error('시스템 목록을 가져오는 중 오류가 발생했습니다.');
+            }
+            
+            const systems = await response.json();
+            if (systems.length === 0) {
+              Swal.fire('알림', '점검할 시스템이 없습니다.', 'info');
+              return;
+            }
+            
+            // 로딩 알림
+            Swal.fire({
+              title: '전체 시스템 점검 중...',
+              html: '점검이 완료될 때까지 기다려주세요...',
+              allowOutsideClick: false,
+              didOpen: () => {
+                Swal.showLoading();
+              }
+            });
+            
+            // 각 시스템 순차적으로 점검
+            let completedCount = 0;
+            for (const system of systems) {
+              try {
+                await fetch(`/api/systems/${system.id}/inspect?inspection_type=자동`, {
+                  method: 'POST'
+                });
+                completedCount++;
+              } catch (error) {
+                console.error(`${system.kor_name} 점검 실패:`, error);
+              }
+            }
+            
+            Swal.fire(
+              '점검 완료',
+              `총 ${systems.length}개 중 ${completedCount}개 시스템 점검 완료`,
+              'success'
+            );
+            
+          } catch (error) {
+            console.error('Error:', error);
+            Swal.fire('오류', '전체 시스템 점검 중 오류가 발생했습니다.', 'error');
+          }
+        }
+      });
+    });
+    
+    // 실제 점검 수행 함수
+    async function doInspection(id, name, type) {
+      try {
+        // 로딩 표시
+        Swal.fire({
+          title: `${name} 점검 중...`,
+          html: '점검이 완료될 때까지 기다려주세요...',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          }
+        });
+        
+        // 점검 API 호출
+        const response = await fetch(`/api/systems/${id}/inspect?inspection_type=${type}`, {
+          method: 'POST'
+        });
+        
+        if (!response.ok) {
+          throw new Error('시스템 점검 중 오류가 발생했습니다.');
+        }
+        
+        const result = await response.json();
+        
+        // 점검 결과 요약
+        let successCount = 0;
+        let failCount = 0;
+        let totalTime = 0;
+        
+        result.menu_results.forEach(menu => {
+          if (menu.status_code >= 200 && menu.status_code < 400) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+          totalTime += menu.response_time;
+        });
+        
+        // 점검 결과 표시
+        Swal.fire({
+          title: '점검 완료',
+          html: `
+            <div class="text-start">
+              <p><strong>시스템:</strong> ${result.system_kor_name}</p>
+              <p><strong>점검 유형:</strong> ${type}</p>
+              <p><strong>총 메뉴:</strong> ${result.menu_results.length}개</p>
+              <p><strong>성공:</strong> ${successCount}개</p>
+              <p><strong>실패:</strong> ${failCount}개</p>
+              <p><strong>총 소요 시간:</strong> ${(totalTime / 1000).toFixed(2)}초</p>
+            </div>
+          `,
+          icon: failCount > 0 ? 'warning' : 'success',
+          confirmButtonText: '확인',
+          showCancelButton: true,
+          cancelButtonText: '상세 결과 보기'
+        }).then((result) => {
+          if (result.dismiss === Swal.DismissReason.cancel) {
+            // 상세 결과 보기 로직 추가 (향후 구현)
+            // TODO: 상세 결과 페이지로 이동
+            console.log('상세 결과 보기');
+          }
+        });
+        
+      } catch (error) {
+        console.error('Error:', error);
+        Swal.fire('오류', '시스템 점검 중 오류가 발생했습니다.', 'error');
       }
     }
     

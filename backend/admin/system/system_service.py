@@ -1,15 +1,37 @@
 from config.database import get_db
-from .system_model import SystemCreate, SystemResponse, SystemUpdate
+from .system_model import SystemCreate, SystemResponse, SystemUpdate, SystemInspectionCreate, SystemInspectionUpdate, SystemInspectionResponse, InspectionMenuResult
 from fastapi import HTTPException, status
 import logging
 from datetime import datetime
 from typing import List, Optional
+import aiohttp
+import asyncio
+import time
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 COLLECTION = "systems"
+
+# 점검 이력 컬렉션 이름
+INSPECTION_COLLECTION = "system_inspections"
+
+# HTTP 상태 코드에 대한 한글 설명
+HTTP_STATUS_TEXT = {
+    200: "정상",
+    201: "생성됨",
+    301: "영구 이동",
+    302: "임시 이동",
+    400: "잘못된 요청",
+    401: "인증 실패",
+    403: "접근 금지",
+    404: "찾을 수 없음",
+    500: "서버 내부 오류",
+    502: "게이트웨이 오류",
+    503: "서비스 사용 불가",
+    504: "게이트웨이 시간 초과"
+}
 
 # datetime 객체를 Firestore에 저장 가능한 형식으로 변환
 def _prepare_dict_for_firestore(data: dict) -> dict:
@@ -210,4 +232,192 @@ async def delete_system(system_id: str) -> bool:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"시스템 삭제 중 오류가 발생했습니다: {str(e)}"
+        )
+
+async def inspect_system(system_id: str, inspection_type: str, created_by: str) -> SystemInspectionResponse:
+    """시스템 URL 연결 상태 점검 서비스"""
+    db = get_db()
+    if db is None:
+        logger.error("데이터베이스 연결 실패")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="데이터베이스 연결 오류가 발생했습니다."
+        )
+    
+    try:
+        # 시스템 정보 조회
+        system_ref = db.collection(COLLECTION).document(system_id)
+        system_doc = system_ref.get()
+        
+        if not system_doc.exists:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"ID {system_id}인 시스템을 찾을 수 없습니다."
+            )
+        
+        system_data = system_doc.to_dict()
+        system_url = system_data.get("url")
+        system_menus = system_data.get("menus", [])
+        
+        # 점검 시작 시간 기록
+        inspection_start = datetime.now()
+        
+        # 점검 이력 초기 데이터 생성
+        inspection_data = {
+            "system_id": system_id,
+            "system_eng_name": system_data.get("eng_name", ""),
+            "system_kor_name": system_data.get("kor_name", ""),
+            "system_url": system_url,
+            "inspection_start": inspection_start.isoformat(),
+            "inspection_type": inspection_type,
+            "created_by": created_by,
+            "menu_results": []
+        }
+        
+        # Firestore에 점검 이력 저장
+        inspection_ref = db.collection(INSPECTION_COLLECTION).document()
+        inspection_ref.set(inspection_data)
+        
+        # 비동기 HTTP 클라이언트 생성
+        inspection_results = []
+        
+        # 각 메뉴별 URL 점검 수행
+        async with aiohttp.ClientSession() as session:
+            for menu in system_menus:
+                menu_name = menu.get("name", "")
+                menu_path = menu.get("path", "")
+                full_url = f"{system_url}{menu_path}"
+                
+                try:
+                    start_time = time.time()
+                    async with session.get(full_url, timeout=10) as response:
+                        end_time = time.time()
+                        response_time = round((end_time - start_time) * 1000, 2)  # ms 단위로 변환
+                        
+                        # 응답 헤더 가져오기
+                        headers = dict(response.headers)
+                        # 헤더값을 문자열로 변환
+                        headers = {k: str(v) for k, v in headers.items()}
+                        
+                        # 상태 코드에 대한 한글 설명 추가
+                        status_code = response.status
+                        status_text = HTTP_STATUS_TEXT.get(status_code, f"알 수 없는 상태 ({status_code})")
+                        
+                        menu_result = {
+                            "menu_name": menu_name,
+                            "path": menu_path,
+                            "status_code": status_code,
+                            "status_text": status_text,
+                            "response_time": response_time,
+                            "headers": headers
+                        }
+                        
+                        inspection_results.append(menu_result)
+                
+                except asyncio.TimeoutError:
+                    menu_result = {
+                        "menu_name": menu_name,
+                        "path": menu_path,
+                        "status_code": 408,
+                        "status_text": "요청 시간 초과",
+                        "response_time": 10000,  # 10초 타임아웃
+                        "headers": {}
+                    }
+                    inspection_results.append(menu_result)
+                
+                except Exception as e:
+                    menu_result = {
+                        "menu_name": menu_name,
+                        "path": menu_path,
+                        "status_code": 0,
+                        "status_text": f"오류 발생: {str(e)}",
+                        "response_time": 0,
+                        "headers": {}
+                    }
+                    inspection_results.append(menu_result)
+        
+        # 점검 종료 시간 기록
+        inspection_end = datetime.now()
+        
+        # 점검 이력 업데이트
+        inspection_update = {
+            "inspection_end": inspection_end.isoformat(),
+            "menu_results": inspection_results
+        }
+        
+        inspection_ref.update(inspection_update)
+        
+        # 응답 데이터 구성
+        response_data = {
+            **inspection_data,
+            "id": inspection_ref.id,
+            "inspection_end": inspection_end.isoformat(),
+            "menu_results": inspection_results
+        }
+        
+        # ISO 문자열로 변환된 날짜를 다시 datetime 객체로 변환
+        response_data["inspection_start"] = inspection_start
+        response_data["inspection_end"] = inspection_end
+        
+        return SystemInspectionResponse(**response_data)
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"시스템 점검 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"시스템 점검 중 오류가 발생했습니다: {str(e)}"
+        )
+
+async def get_system_inspections(system_id: str, limit: int = 10) -> List[SystemInspectionResponse]:
+    """시스템의 점검 이력 조회 서비스"""
+    db = get_db()
+    if db is None:
+        logger.error("데이터베이스 연결 실패")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="데이터베이스 연결 오류가 발생했습니다."
+        )
+    
+    try:
+        # 시스템 정보 확인
+        system_ref = db.collection(COLLECTION).document(system_id)
+        system_doc = system_ref.get()
+        
+        if not system_doc.exists:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"ID {system_id}인 시스템을 찾을 수 없습니다."
+            )
+        
+        # 해당 시스템의 점검 이력 조회
+        inspections_query = (
+            db.collection(INSPECTION_COLLECTION)
+            .where("system_id", "==", system_id)
+            .order_by("inspection_start", direction="DESCENDING")
+            .limit(limit)
+        )
+        
+        inspections = []
+        for doc in inspections_query.stream():
+            inspection_data = doc.to_dict()
+            inspection_data["id"] = doc.id
+            
+            # ISO 문자열로 변환된 날짜를 다시 datetime 객체로 변환
+            for date_field in ['inspection_start', 'inspection_end']:
+                if isinstance(inspection_data.get(date_field), str):
+                    inspection_data[date_field] = datetime.fromisoformat(inspection_data[date_field])
+            
+            inspections.append(SystemInspectionResponse(**inspection_data))
+        
+        return inspections
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"시스템 점검 이력 조회 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"시스템 점검 이력 조회 중 오류가 발생했습니다: {str(e)}"
         )
