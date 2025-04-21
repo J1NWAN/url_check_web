@@ -38,6 +38,8 @@
   <script src="{{ url_for('assets', path='/js/plugins/chartjs.min.js') }}"></script>
   <!-- Material Dashboard 컨트롤 센터 -->
   <script src="{{ url_for('assets', path='/js/material-dashboard.min.js?v=3.2.0') }}" data-sourcemap="false"></script>
+  <!-- 인증 관련 공통 모듈 -->
+  <script src="{{ url_for('assets', path='/js/common/auth.js') }}"></script>
   
   <!-- 페이지별 스크립트 -->
   {% block page_scripts_head %}{% endblock %}
@@ -233,11 +235,8 @@
     // 로그아웃 버튼 처리
     document.getElementById('logout-btn').addEventListener('click', function(e) {
       e.preventDefault();
-      // 토큰 삭제
-      localStorage.removeItem('token');
-      sessionStorage.removeItem('token');
-      // 로그인 페이지로 리디렉션
-      window.location.href = '/auth/signin';
+      // 공통 인증 모듈의 logout 함수 사용
+      logout();
     });
     
     // 현재 페이지에 해당하는 네비게이션 항목에 active 클래스 추가

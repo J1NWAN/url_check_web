@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Request, status, Path, Query
+from fastapi import APIRouter, HTTPException, Request, status, Path, Query, Depends, Header
 from fastapi.responses import JSONResponse
 import logging
-from typing import List
+from typing import List, Optional
 
 from config.templates import templates
 from .system_model import SystemCreate, SystemResponse, SystemUpdate, SystemInspectionResponse
@@ -102,12 +102,24 @@ async def delete_system_api(system_id: str = Path(..., description="삭제할 �
 # 시스템 점검 API
 @router.post("/api/systems/{system_id}/inspect", response_model=SystemInspectionResponse)
 async def inspect_system_api(
+    request: Request,
     system_id: str = Path(..., description="점검할 시스템 ID"),
-    inspection_type: str = Query("자동", description="점검 유형 (자동 또는 수동)")
+    inspection_type: str = Query("자동", description="점검 유형 (자동 또는 수동)"),
+    authorization: Optional[str] = Header(None, description="Authorization header")
 ):
     try:
-        # TODO: 실제 사용자 ID를 가져오는 로직으로 변경 필요
-        created_by = "system"
+        # 요청 본문에서 사용자의 userid와 점검 유형 가져오기
+        req_body = await request.json()
+        userid = req_body.get("inspected_by", "system")
+        
+        # 요청 본문에서 점검 유형 가져오기 (요청 본문의 값이 있으면 우선 사용)
+        req_inspection_type = req_body.get("inspection_type")
+        if req_inspection_type:
+            inspection_type = req_inspection_type
+        
+        # 빈 문자열이나 None인 경우 기본값 사용
+        if not userid:
+            userid = "system"
         
         # 점검 유형 유효성 검사
         if inspection_type not in ["자동", "수동"]:
@@ -116,7 +128,8 @@ async def inspect_system_api(
                 detail="점검 유형은 '자동' 또는 '수동'이어야 합니다."
             )
         
-        return await inspect_system(system_id, inspection_type, created_by)
+        logger.info(f"시스템 점검 요청: 시스템ID={system_id}, 유형={inspection_type}, 사용자={userid}")
+        return await inspect_system(system_id, inspection_type, userid)
     except HTTPException:
         raise
     except Exception as e:
