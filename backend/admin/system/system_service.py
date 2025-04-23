@@ -234,7 +234,7 @@ async def delete_system(system_id: str) -> bool:
             detail=f"시스템 삭제 중 오류가 발생했습니다: {str(e)}"
         )
 
-async def inspect_system(system_id: str, inspection_type: str, created_by: str) -> SystemInspectionResponse:
+async def inspect_system(system_id: str, inspection_type: str, created_by: str, menu_results=None) -> SystemInspectionResponse:
     """시스템 URL 연결 상태 점검 서비스"""
     db = get_db()
     if db is None:
@@ -278,63 +278,68 @@ async def inspect_system(system_id: str, inspection_type: str, created_by: str) 
         inspection_ref = db.collection(INSPECTION_COLLECTION).document()
         inspection_ref.set(inspection_data)
         
-        # 비동기 HTTP 클라이언트 생성
+        # 초기화
         inspection_results = []
         
-        # 각 메뉴별 URL 점검 수행
-        async with aiohttp.ClientSession() as session:
-            for menu in system_menus:
-                menu_name = menu.get("name", "")
-                menu_path = menu.get("path", "")
-                full_url = f"{system_url}{menu_path}"
-                
-                try:
-                    start_time = time.time()
-                    async with session.get(full_url, timeout=10) as response:
-                        end_time = time.time()
-                        response_time = round((end_time - start_time) * 1000, 2)  # ms 단위로 변환
-                        
-                        # 응답 헤더 가져오기
-                        headers = dict(response.headers)
-                        # 헤더값을 문자열로 변환
-                        headers = {k: str(v) for k, v in headers.items()}
-                        
-                        # 상태 코드에 대한 한글 설명 추가
-                        status_code = response.status
-                        status_text = HTTP_STATUS_TEXT.get(status_code, f"알 수 없는 상태 ({status_code})")
-                        
+        # 수동 점검이고 menu_results가 제공된 경우, 자동 점검을 수행하지 않고 전달받은 결과 사용
+        if inspection_type == "수동" and menu_results:
+            logger.info(f"수동 점검 결과 사용: {len(menu_results)}개 메뉴")
+            inspection_results = menu_results
+        else:
+            # 자동 점검: 각 메뉴별 URL 점검 수행
+            async with aiohttp.ClientSession() as session:
+                for menu in system_menus:
+                    menu_name = menu.get("name", "")
+                    menu_path = menu.get("path", "")
+                    full_url = f"{system_url}{menu_path}"
+                    
+                    try:
+                        start_time = time.time()
+                        async with session.get(full_url, timeout=10) as response:
+                            end_time = time.time()
+                            response_time = round((end_time - start_time) * 1000, 2)  # ms 단위로 변환
+                            
+                            # 응답 헤더 가져오기
+                            headers = dict(response.headers)
+                            # 헤더값을 문자열로 변환
+                            headers = {k: str(v) for k, v in headers.items()}
+                            
+                            # 상태 코드에 대한 한글 설명 추가
+                            status_code = response.status
+                            status_text = HTTP_STATUS_TEXT.get(status_code, f"알 수 없는 상태 ({status_code})")
+                            
+                            menu_result = {
+                                "menu_name": menu_name,
+                                "path": menu_path,
+                                "status_code": status_code,
+                                "status_text": status_text,
+                                "response_time": response_time,
+                                "headers": headers
+                            }
+                            
+                            inspection_results.append(menu_result)
+                    
+                    except asyncio.TimeoutError:
                         menu_result = {
                             "menu_name": menu_name,
                             "path": menu_path,
-                            "status_code": status_code,
-                            "status_text": status_text,
-                            "response_time": response_time,
-                            "headers": headers
+                            "status_code": 408,
+                            "status_text": "요청 시간 초과",
+                            "response_time": 10000,  # 10초 타임아웃
+                            "headers": {}
                         }
-                        
                         inspection_results.append(menu_result)
-                
-                except asyncio.TimeoutError:
-                    menu_result = {
-                        "menu_name": menu_name,
-                        "path": menu_path,
-                        "status_code": 408,
-                        "status_text": "요청 시간 초과",
-                        "response_time": 10000,  # 10초 타임아웃
-                        "headers": {}
-                    }
-                    inspection_results.append(menu_result)
-                
-                except Exception as e:
-                    menu_result = {
-                        "menu_name": menu_name,
-                        "path": menu_path,
-                        "status_code": 0,
-                        "status_text": f"오류 발생: {str(e)}",
-                        "response_time": 0,
-                        "headers": {}
-                    }
-                    inspection_results.append(menu_result)
+                    
+                    except Exception as e:
+                        menu_result = {
+                            "menu_name": menu_name,
+                            "path": menu_path,
+                            "status_code": 0,
+                            "status_text": f"오류 발생: {str(e)}",
+                            "response_time": 0,
+                            "headers": {}
+                        }
+                        inspection_results.append(menu_result)
         
         # 점검 종료 시간 기록
         inspection_end = datetime.now()
