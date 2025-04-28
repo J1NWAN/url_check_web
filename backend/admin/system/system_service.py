@@ -485,3 +485,102 @@ async def get_system_inspections(system_id: str, limit: int = 10) -> List[System
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"시스템 점검 이력 조회 중 오류가 발생했습니다: {str(e)}"
         )
+
+async def get_recent_inspections(limit: int = 5) -> List[Dict[str, Any]]:
+    """최근 점검 이력을 조회하는 함수"""
+    db = get_db()
+    if db is None:
+        logger.error("데이터베이스 연결 실패")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="데이터베이스 연결 오류가 발생했습니다."
+        )
+    
+    try:
+        # 점검 이력 문서 조회 (문서명 기준 내림차순)
+        inspections_query = (
+            db.collection(INSPECTION_COLLECTION)
+            .order_by("__name__", direction="DESCENDING")
+            .limit(limit)
+        )
+        
+        recent_inspections = []
+        
+        for doc in inspections_query.stream():
+            doc_data = doc.to_dict()
+            doc_id = doc.id
+            
+            if "inspection_systems" in doc_data and doc_data["inspection_systems"]:
+                # 문서 생성 시간
+                created_at = doc_data.get("created_at")
+                if isinstance(created_at, str):
+                    try:
+                        created_at_dt = datetime.fromisoformat(created_at)
+                        created_at = created_at  # 원래 문자열 유지
+                    except ValueError:
+                        created_at = created_at  # 파싱 실패 시 원래 값 유지
+                else:
+                    # datetime 객체인 경우 문자열로 변환
+                    created_at = created_at.isoformat() if created_at else None
+                
+                # 시스템 수 계산 및 첫 번째 시스템 정보 추출
+                systems_count = len(doc_data["inspection_systems"])
+                first_system = doc_data["inspection_systems"][0]
+                
+                # 점검 유형 추출
+                inspection_type = first_system.get("inspection_type", "자동")
+                
+                # 점검 결과 상태 계산 (정상/오류)
+                all_results_normal = True
+                for system in doc_data["inspection_systems"]:
+                    system_normal = True
+                    for menu_result in system.get("inspection_results", []):
+                        status_code = menu_result.get("status_code", 0)
+                        if status_code < 200 or status_code >= 400:
+                            system_normal = False
+                            break
+                    
+                    if not system_normal:
+                        all_results_normal = False
+                        break
+                
+                # document 내용에서 datetime 객체 문자열로 변환 (클라이언트 전송 오류 방지)
+                cleaned_doc_data = {}
+                for key, value in doc_data.items():
+                    if key == 'inspection_systems':
+                        cleaned_systems = []
+                        for system in value:
+                            cleaned_system = {}
+                            for system_key, system_value in system.items():
+                                if isinstance(system_value, datetime):
+                                    cleaned_system[system_key] = system_value.isoformat()
+                                else:
+                                    cleaned_system[system_key] = system_value
+                            cleaned_systems.append(cleaned_system)
+                        cleaned_doc_data[key] = cleaned_systems
+                    elif isinstance(value, datetime):
+                        cleaned_doc_data[key] = value.isoformat()
+                    else:
+                        cleaned_doc_data[key] = value
+                
+                # 결과 정보 구성
+                inspection_info = {
+                    "id": doc_id,
+                    "created_at": created_at,
+                    "systems_count": systems_count,
+                    "first_system_name": first_system.get("system_kor_name", ""),
+                    "inspection_type": inspection_type,
+                    "is_normal": all_results_normal,
+                    "document": cleaned_doc_data
+                }
+                
+                recent_inspections.append(inspection_info)
+        
+        return recent_inspections
+    
+    except Exception as e:
+        logger.error(f"최근 점검 이력 조회 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"최근 점검 이력 조회 중 오류가 발생했습니다: {str(e)}"
+        )

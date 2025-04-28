@@ -178,83 +178,17 @@
           </div>
         </div>
         <div class="card-body pt-4 p-3">
-          <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">Newest</h6>
-          <ul class="list-group">
-            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
-              <div class="d-flex align-items-center">
-                <button class="btn btn-icon-only btn-rounded btn-outline-danger mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_more</i></button>
-                <div class="d-flex flex-column">
-                  <h6 class="mb-1 text-dark text-sm">Netflix</h6>
-                  <span class="text-xs">27 March 2020, at 12:30 PM</span>
-                </div>
+          <h6 class="text-uppercase text-body text-xs font-weight-bolder mb-3">최근 점검 기록</h6>
+          <ul class="list-group" id="recent-inspections">
+            <!-- 최근 점검 결과가 여기에 동적으로 추가됩니다 -->
+            <div id="loading-inspections" class="text-center py-3">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">로딩중...</span>
               </div>
-              <div class="d-flex align-items-center text-danger text-gradient text-sm font-weight-bold">
-                - $ 2,500
-              </div>
-            </li>
-            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
-              <div class="d-flex align-items-center">
-                <button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_less</i></button>
-                <div class="d-flex flex-column">
-                  <h6 class="mb-1 text-dark text-sm">Apple</h6>
-                  <span class="text-xs">27 March 2020, at 04:30 AM</span>
-                </div>
-              </div>
-              <div class="d-flex align-items-center text-success text-gradient text-sm font-weight-bold">
-                + $ 2,000
-              </div>
-            </li>
-          </ul>
-          <h6 class="text-uppercase text-body text-xs font-weight-bolder my-3">Yesterday</h6>
-          <ul class="list-group">
-            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
-              <div class="d-flex align-items-center">
-                <button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_less</i></button>
-                <div class="d-flex flex-column">
-                  <h6 class="mb-1 text-dark text-sm">Stripe</h6>
-                  <span class="text-xs">26 March 2020, at 13:45 PM</span>
-                </div>
-              </div>
-              <div class="d-flex align-items-center text-success text-gradient text-sm font-weight-bold">
-                + $ 750
-              </div>
-            </li>
-            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
-              <div class="d-flex align-items-center">
-                <button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_less</i></button>
-                <div class="d-flex flex-column">
-                  <h6 class="mb-1 text-dark text-sm">HubSpot</h6>
-                  <span class="text-xs">26 March 2020, at 12:30 PM</span>
-                </div>
-              </div>
-              <div class="d-flex align-items-center text-success text-gradient text-sm font-weight-bold">
-                + $ 1,000
-              </div>
-            </li>
-            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
-              <div class="d-flex align-items-center">
-                <button class="btn btn-icon-only btn-rounded btn-outline-success mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">expand_less</i></button>
-                <div class="d-flex flex-column">
-                  <h6 class="mb-1 text-dark text-sm">Creative Tim</h6>
-                  <span class="text-xs">26 March 2020, at 08:30 AM</span>
-                </div>
-              </div>
-              <div class="d-flex align-items-center text-success text-gradient text-sm font-weight-bold">
-                + $ 2,500
-              </div>
-            </li>
-            <li class="list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg">
-              <div class="d-flex align-items-center">
-                <button class="btn btn-icon-only btn-rounded btn-outline-dark mb-0 me-3 p-3 btn-sm d-flex align-items-center justify-content-center"><i class="material-symbols-rounded text-lg">priority_high</i></button>
-                <div class="d-flex flex-column">
-                  <h6 class="mb-1 text-dark text-sm">Webflow</h6>
-                  <span class="text-xs">26 March 2020, at 05:00 AM</span>
-                </div>
-              </div>
-              <div class="d-flex align-items-center text-dark text-sm font-weight-bold">
-                Pending
-              </div>
-            </li>
+            </div>
+            <div id="empty-inspections" class="text-center py-3" style="display: none;">
+              <p class="text-muted">점검 이력이 없습니다.</p>
+            </div>
           </ul>
         </div>
       </div>
@@ -403,6 +337,8 @@
     initPage(() => {
       // 인증 확인 후 시스템 목록 가져오기
       fetchSystems();
+      // 최근 점검 결과 가져오기
+      fetchRecentInspections();
     });
     
     //===================================================================
@@ -913,6 +849,8 @@
                 
                 // 시스템 목록 새로고침
                 fetchSystems();
+                // 최근 점검 결과 새로고침
+                fetchRecentInspections();
               })
               .catch(error => {
                 console.error('점검 결과 저장 실패:', error);
@@ -1069,6 +1007,9 @@
           confirmButtonColor: '#3085d6',
           confirmButtonText: '확인'
         });
+        
+        // 최근 점검 결과 새로고침
+        fetchRecentInspections();
       } catch (error) {
         console.error('Error:', error);
         Swal.fire({
@@ -1166,7 +1107,7 @@
         systemResults.forEach(result => {
           resultHTML += `
             <li style="margin-bottom: 5px;">
-              <i class="material-symbols-rounded" style="font-size: 16px; color: ${result.success ? 'green' : 'red'};">
+              <i class="material-symbols-rounded" style="font-size: 24px; color: ${result.success ? 'green' : 'red'};">
                 ${result.success ? 'check_circle' : 'error'}
               </i>
               ${result.system} - ${result.success ? '정상' : '오류'} 
@@ -1187,6 +1128,8 @@
         
         // 시스템 목록 새로고침
         fetchSystems();
+        // 최근 점검 결과 새로고침
+        fetchRecentInspections();
       } catch (error) {
         console.error('Error:', error);
         Swal.fire({
@@ -1386,6 +1329,156 @@
       // 더보기 버튼 숨김
       this.style.display = 'none';
     });
+
+    //===================================================================
+    // 최근 점검 결과 조회 및 표시
+    //===================================================================
+    // 최근 점검 결과 조회 함수
+    async function fetchRecentInspections() {
+      try {
+        const loadingInspections = document.getElementById('loading-inspections');
+        const emptyInspections = document.getElementById('empty-inspections');
+        const recentInspectionsList = document.getElementById('recent-inspections');
+        
+        loadingInspections.style.display = 'block';
+        emptyInspections.style.display = 'none';
+        
+        // 기존 내용 초기화 (로딩 및 empty 메시지 제외)
+        const items = recentInspectionsList.querySelectorAll('li');
+        items.forEach(item => item.remove());
+        
+        // API 호출
+        const response = await fetch('/api/inspections/recent');
+        
+        if (!response.ok) {
+          throw new Error('최근 점검 결과를 가져오는 중 오류가 발생했습니다.');
+        }
+        
+        const inspections = await response.json();
+        
+        loadingInspections.style.display = 'none';
+        
+        if (!inspections || inspections.length === 0) {
+          emptyInspections.style.display = 'block';
+          return;
+        }
+        
+        // 점검 결과 표시
+        renderRecentInspections(inspections);
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loading-inspections').style.display = 'none';
+        document.getElementById('empty-inspections').textContent = '점검 결과를 불러오는 중 오류가 발생했습니다.';
+        document.getElementById('empty-inspections').style.display = 'block';
+      }
+    }
+    
+    // 최근 점검 결과 렌더링 함수
+    function renderRecentInspections(inspections) {
+      const recentInspectionsList = document.getElementById('recent-inspections');
+      
+      inspections.forEach(inspection => {
+        // 날짜 포맷팅
+        const createdDate = new Date(inspection.created_at);
+        const dateFormatted = createdDate.toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        const timeFormatted = createdDate.toLocaleTimeString('ko-KR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        
+        // 시스템 표시 텍스트
+        const systemText = inspection.systems_count > 1 
+          ? `${inspection.first_system_name} 외 ${inspection.systems_count - 1}개 시스템` 
+          : inspection.first_system_name;
+        
+        // 아이콘 및 색상 설정
+        const isNormal = inspection.is_normal;
+        const iconStyle = isNormal ? 'success' : 'danger';
+        const icon = isNormal ? 'check_circle' : 'error';
+        const statusText = isNormal ? '정상' : '오류';
+        
+        // 점검 유형 배지
+        const typeBadge = inspection.inspection_type === '자동' 
+          ? '<span class="badge bg-info ms-2">자동</span>'
+          : '<span class="badge bg-warning ms-2">수동</span>';
+        
+        // 리스트 아이템 생성
+        const li = document.createElement('li');
+        li.className = 'list-group-item border-0 d-flex justify-content-between ps-0 mb-2 border-radius-lg';
+        li.innerHTML = `
+          <div class="d-flex align-items-center">
+            <button class="btn btn-icon-only btn-rounded btn-outline-${iconStyle} mb-0 me-3 p-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+              <i class="material-symbols-rounded" style="font-size: 24px;">${icon}</i>
+            </button>
+            <div class="d-flex flex-column">
+              <h6 class="mb-1 text-dark text-sm">${systemText} ${typeBadge}</h6>
+              <span class="text-xs">${dateFormatted}, ${timeFormatted}</span>
+            </div>
+          </div>
+          <div class="d-flex align-items-center text-${iconStyle} text-gradient text-sm font-weight-bold">
+            ${statusText}
+          </div>
+        `;
+        
+        // 상세 보기를 위한 클릭 이벤트 추가
+        li.addEventListener('click', function() {
+          showInspectionDetails(inspection);
+        });
+        
+        recentInspectionsList.appendChild(li);
+      });
+    }
+    
+    // 점검 결과 상세 정보 표시
+    function showInspectionDetails(inspection) {
+      // 시스템 목록 HTML 생성
+      let systemsHtml = '';
+      const systems = inspection.document.inspection_systems;
+      
+      systems.forEach(system => {
+        const normalCount = system.inspection_results.filter(
+          result => result.status_code >= 200 && result.status_code < 400
+        ).length;
+        
+        const errorCount = system.inspection_results.length - normalCount;
+        const statusIcon = errorCount === 0 
+          ? '<i class="material-symbols-rounded text-success">check_circle</i>' 
+          : '<i class="material-symbols-rounded text-danger">error</i>';
+        
+        systemsHtml += `
+          <div class="mb-2">
+            <i class="material-symbols-rounded text-${errorCount === 0 ? 'success' : 'danger'}" style="font-size: 24px;">
+              ${errorCount === 0 ? 'check_circle' : 'error'}
+            </i>
+            <strong>${system.system_kor_name}</strong> 
+            (정상: ${normalCount}, 오류: ${errorCount})
+          </div>
+        `;
+      });
+      
+      // 상세 정보 모달 표시
+      Swal.fire({
+        title: '점검 상세 정보',
+        html: `
+          <div class="text-start">
+            <p><strong>점검 일시:</strong> ${new Date(inspection.created_at).toLocaleString('ko-KR')}</p>
+            <p><strong>점검 유형:</strong> ${inspection.inspection_type}</p>
+            <p><strong>점검 결과:</strong> ${inspection.is_normal ? '정상' : '오류'}</p>
+            <p><strong>점검 시스템:</strong></p>
+            <div class="mt-2">
+              ${systemsHtml}
+            </div>
+          </div>
+        `,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: '확인'
+      });
+    }
   });
 </script>
 

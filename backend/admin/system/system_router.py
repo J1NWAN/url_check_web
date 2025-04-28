@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, status, Path, Query, Depends, Header
 from fastapi.responses import JSONResponse
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import aiohttp
 import asyncio
 import time
@@ -13,7 +13,7 @@ from .system_model import SystemCreate, SystemResponse, SystemUpdate, SystemInsp
 from .system_service import (
     create_system, get_systems, get_system, update_system, delete_system, 
     inspect_system, get_system_inspections, perform_system_inspection, 
-    save_inspection_history
+    save_inspection_history, get_recent_inspections
 )
 
 # 로거 설정
@@ -311,4 +311,21 @@ async def inspect_all_systems_api(request: Request):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"전체 시스템 점검 중 오류가 발생했습니다: {str(e)}"
+        )
+
+# 최근 점검 이력 조회 API
+@router.get("/api/inspections/recent", response_model=List[Dict[str, Any]])
+async def get_recent_inspections_api(
+    limit: int = Query(5, description="조회할 이력 개수", ge=1, le=10)
+):
+    """최근 점검 이력을 조회하는 API"""
+    try:
+        return await get_recent_inspections(limit)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"최근 점검 이력 조회 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"최근 점검 이력 조회 중 오류가 발생했습니다: {str(e)}"
         )
