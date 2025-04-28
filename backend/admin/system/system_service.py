@@ -3,10 +3,11 @@ from .system_model import SystemCreate, SystemResponse, SystemUpdate, SystemInsp
 from fastapi import HTTPException, status
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import aiohttp
 import asyncio
 import time
+from google.cloud import firestore
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -234,8 +235,8 @@ async def delete_system(system_id: str) -> bool:
             detail=f"시스템 삭제 중 오류가 발생했습니다: {str(e)}"
         )
 
-async def inspect_system(system_id: str, inspection_type: str, created_by: str, menu_results=None) -> SystemInspectionResponse:
-    """시스템 URL 연결 상태 점검 서비스"""
+async def perform_system_inspection(system_id: str, inspection_type: str, created_by: str, inspection_results=None) -> Dict[str, Any]:
+    """시스템 URL 연결 상태 점검 수행 함수 (저장하지 않고 결과만 반환)"""
     db = get_db()
     if db is None:
         logger.error("데이터베이스 연결 실패")
@@ -262,7 +263,7 @@ async def inspect_system(system_id: str, inspection_type: str, created_by: str, 
         # 점검 시작 시간 기록
         inspection_start = datetime.now()
         
-        # 점검 이력 초기 데이터 생성
+        # 점검 이력 데이터 생성
         inspection_data = {
             "system_id": system_id,
             "system_eng_name": system_data.get("eng_name", ""),
@@ -271,20 +272,16 @@ async def inspect_system(system_id: str, inspection_type: str, created_by: str, 
             "inspection_start": inspection_start.isoformat(),
             "inspection_type": inspection_type,
             "created_by": created_by,
-            "menu_results": []
+            "inspection_results": []
         }
         
-        # Firestore에 점검 이력 저장
-        inspection_ref = db.collection(INSPECTION_COLLECTION).document()
-        inspection_ref.set(inspection_data)
-        
         # 초기화
-        inspection_results = []
+        inspection_results_data = []
         
-        # 수동 점검이고 menu_results가 제공된 경우, 자동 점검을 수행하지 않고 전달받은 결과 사용
-        if inspection_type == "수동" and menu_results:
-            logger.info(f"수동 점검 결과 사용: {len(menu_results)}개 메뉴")
-            inspection_results = menu_results
+        # 수동 점검이고 inspection_results가 제공된 경우, 자동 점검을 수행하지 않고 전달받은 결과 사용
+        if inspection_type == "수동" and inspection_results:
+            logger.info(f"수동 점검 결과 사용: {len(inspection_results)}개 메뉴")
+            inspection_results_data = inspection_results
         else:
             # 자동 점검: 각 메뉴별 URL 점검 수행
             async with aiohttp.ClientSession() as session:
@@ -317,7 +314,7 @@ async def inspect_system(system_id: str, inspection_type: str, created_by: str, 
                                 "headers": headers
                             }
                             
-                            inspection_results.append(menu_result)
+                            inspection_results_data.append(menu_result)
                     
                     except asyncio.TimeoutError:
                         menu_result = {
@@ -328,7 +325,7 @@ async def inspect_system(system_id: str, inspection_type: str, created_by: str, 
                             "response_time": 10000,  # 10초 타임아웃
                             "headers": {}
                         }
-                        inspection_results.append(menu_result)
+                        inspection_results_data.append(menu_result)
                     
                     except Exception as e:
                         menu_result = {
@@ -339,32 +336,83 @@ async def inspect_system(system_id: str, inspection_type: str, created_by: str, 
                             "response_time": 0,
                             "headers": {}
                         }
-                        inspection_results.append(menu_result)
+                        inspection_results_data.append(menu_result)
         
         # 점검 종료 시간 기록
         inspection_end = datetime.now()
         
-        # 점검 이력 업데이트
-        inspection_update = {
-            "inspection_end": inspection_end.isoformat(),
-            "menu_results": inspection_results
-        }
+        # 점검 결과 업데이트
+        inspection_data["inspection_end"] = inspection_end.isoformat()
+        inspection_data["inspection_results"] = inspection_results_data
         
-        inspection_ref.update(inspection_update)
+        # 고유 ID 생성
+        unique_id = f"{system_id}_{int(inspection_start.timestamp())}"
+        inspection_data["id"] = unique_id
         
-        # 응답 데이터 구성
-        response_data = {
-            **inspection_data,
-            "id": inspection_ref.id,
-            "inspection_end": inspection_end.isoformat(),
-            "menu_results": inspection_results
-        }
-        
-        # ISO 문자열로 변환된 날짜를 다시 datetime 객체로 변환
+        # ISO 문자열로 변환된 날짜를 datetime 객체로 변환하여 응답용 데이터 생성
+        response_data = dict(inspection_data)
         response_data["inspection_start"] = inspection_start
         response_data["inspection_end"] = inspection_end
         
-        return SystemInspectionResponse(**response_data)
+        return inspection_data
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"시스템 점검 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"시스템 점검 중 오류가 발생했습니다: {str(e)}"
+        )
+
+async def save_inspection_history(inspection_systems: List[Dict[str, Any]], document_id: str = None) -> str:
+    """점검 이력을 저장하는 함수"""
+    db = get_db()
+    if db is None:
+        logger.error("데이터베이스 연결 실패")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="데이터베이스 연결 오류가 발생했습니다."
+        )
+    
+    try:
+        # 문서 ID가 제공되지 않은 경우 현재 시간으로 생성
+        if not document_id:
+            document_id = datetime.now().strftime("%Y%m%d%H%M%S")
+        
+        inspections_ref = db.collection(INSPECTION_COLLECTION).document(document_id)
+        
+        # 문서 생성
+        inspections_ref.set({
+            "inspection_systems": inspection_systems,
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat()
+        })
+        
+        return document_id
+    
+    except Exception as e:
+        logger.error(f"점검 이력 저장 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"점검 이력 저장 중 오류가 발생했습니다: {str(e)}"
+        )
+
+async def inspect_system(system_id: str, inspection_type: str, created_by: str, inspection_results=None) -> SystemInspectionResponse:
+    """시스템 URL 연결 상태 점검 서비스 (점검 실행 및 결과 저장)"""
+    try:
+        # 점검 실행
+        inspection_data = await perform_system_inspection(system_id, inspection_type, created_by, inspection_results)
+        
+        # 이력 저장 (개별 시스템 점검의 경우 문서 ID 자동 생성)
+        await save_inspection_history([inspection_data])
+        
+        # ISO 문자열로 변환된 날짜를 datetime 객체로 변환
+        for date_field in ['inspection_start', 'inspection_end']:
+            if isinstance(inspection_data.get(date_field), str):
+                inspection_data[date_field] = datetime.fromisoformat(inspection_data[date_field])
+        
+        return SystemInspectionResponse(**inspection_data)
     
     except HTTPException:
         raise
@@ -396,27 +444,38 @@ async def get_system_inspections(system_id: str, limit: int = 10) -> List[System
                 detail=f"ID {system_id}인 시스템을 찾을 수 없습니다."
             )
         
-        # 해당 시스템의 점검 이력 조회
+        # 전체 점검 이력 문서 조회 (최신 문서부터 - 문서 이름이 타임스탬프 형식이므로 이름 기준 내림차순)
         inspections_query = (
             db.collection(INSPECTION_COLLECTION)
-            .where("system_id", "==", system_id)
-            .order_by("inspection_start", direction="DESCENDING")
-            .limit(limit)
+            .order_by("__name__", direction="DESCENDING")
+            .limit(50)  # 최근 50개 문서만 조회
         )
         
         inspections = []
+        # 모든 문서를 조회하여 해당 시스템의 점검 이력 필터링
         for doc in inspections_query.stream():
-            inspection_data = doc.to_dict()
-            inspection_data["id"] = doc.id
+            doc_data = doc.to_dict()
+            if "inspection_systems" in doc_data:
+                for inspection in doc_data["inspection_systems"]:
+                    if inspection.get("system_id") == system_id:
+                        # ISO 문자열로 변환된 날짜를 다시 datetime 객체로 변환
+                        for date_field in ['inspection_start', 'inspection_end']:
+                            if isinstance(inspection.get(date_field), str):
+                                inspection[date_field] = datetime.fromisoformat(inspection[date_field])
+                        
+                        # 응답용 ID 생성
+                        if "id" not in inspection:
+                            inspection["id"] = f"{system_id}_{int(inspection['inspection_start'].timestamp())}"
+                        
+                        inspections.append(SystemInspectionResponse(**inspection))
             
-            # ISO 문자열로 변환된 날짜를 다시 datetime 객체로 변환
-            for date_field in ['inspection_start', 'inspection_end']:
-                if isinstance(inspection_data.get(date_field), str):
-                    inspection_data[date_field] = datetime.fromisoformat(inspection_data[date_field])
-            
-            inspections.append(SystemInspectionResponse(**inspection_data))
+            # 필요한 개수의 이력을 찾았으면 중단
+            if len(inspections) >= limit:
+                break
         
-        return inspections
+        # limit 적용 (정렬 후)
+        inspections.sort(key=lambda x: x.inspection_start, reverse=True)
+        return inspections[:limit]
     
     except HTTPException:
         raise

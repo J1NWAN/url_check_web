@@ -5,10 +5,16 @@ from typing import List, Optional
 import aiohttp
 import asyncio
 import time
+from datetime import datetime
 
 from config.templates import templates
+from config.database import get_db
 from .system_model import SystemCreate, SystemResponse, SystemUpdate, SystemInspectionResponse
-from .system_service import create_system, get_systems, get_system, update_system, delete_system, inspect_system, get_system_inspections
+from .system_service import (
+    create_system, get_systems, get_system, update_system, delete_system, 
+    inspect_system, get_system_inspections, perform_system_inspection, 
+    save_inspection_history
+)
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -132,10 +138,10 @@ async def inspect_system_api(
             )
         
         # 수동 점검인 경우 사용자가 제공한 메뉴 결과 확인
-        menu_results = req_body.get("menu_results")
+        inspection_results = req_body.get("inspection_results")
         
-        logger.info(f"시스템 점검 요청: 시스템ID={system_id}, 유형={inspection_type}, 사용자={userid}, 메뉴결과={menu_results}")
-        return await inspect_system(system_id, inspection_type, userid, menu_results)
+        logger.info(f"시스템 점검 요청: 시스템ID={system_id}, 유형={inspection_type}, 사용자={userid}, 메뉴결과={inspection_results}")
+        return await inspect_system(system_id, inspection_type, userid, inspection_results)
     except HTTPException:
         raise
     except Exception as e:
@@ -242,4 +248,67 @@ async def proxy_header(request: Request):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"헤더 정보를 가져오는 중 오류가 발생했습니다: {str(e)}"
+        )
+
+# 전체 시스템 점검 API
+@router.post("/api/systems/inspect-all", response_model=List[SystemInspectionResponse])
+async def inspect_all_systems_api(request: Request):
+    """모든 시스템을 일괄 점검하는 API"""
+    try:
+        # 요청 본문에서 사용자의 userid 가져오기
+        req_body = await request.json()
+        userid = req_body.get("inspected_by", "system")
+        
+        # 빈 문자열이나 None인 경우 기본값 사용
+        if not userid:
+            userid = "system"
+        
+        # 모든 시스템 목록 조회
+        systems = await get_systems()
+        
+        if not systems:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="등록된 시스템이 없습니다."
+            )
+        
+        # 점검 시간으로 문서 이름 생성 (YYYYMMDDHI24MISS 형식)
+        document_id = datetime.now().strftime("%Y%m%d%H%M%S")
+        
+        # 점검 결과를 저장할 배열
+        inspection_systems = []
+        inspection_responses = []
+        
+        # 각 시스템 순차적으로 점검
+        for system in systems:
+            try:
+                # 개별 시스템 점검 수행 (저장은 하지 않고 결과만 가져옴)
+                inspection_data = await perform_system_inspection(system.id, "자동", userid)
+                
+                # 결과 배열에 추가
+                inspection_systems.append(inspection_data)
+                
+                # 응답용 객체 생성
+                for date_field in ['inspection_start', 'inspection_end']:
+                    if isinstance(inspection_data.get(date_field), str):
+                        inspection_data[date_field] = datetime.fromisoformat(inspection_data[date_field])
+                
+                inspection_responses.append(SystemInspectionResponse(**inspection_data))
+            except Exception as e:
+                logger.error(f"시스템 점검 중 오류 발생 (ID: {system.id}): {str(e)}")
+                # 오류가 발생해도 계속 진행
+                continue
+        
+        # 모든 시스템 점검 결과를 하나의 문서로 저장
+        if inspection_systems:
+            await save_inspection_history(inspection_systems, document_id)
+        
+        return inspection_responses
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"전체 시스템 점검 중 오류 발생: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"전체 시스템 점검 중 오류가 발생했습니다: {str(e)}"
         )

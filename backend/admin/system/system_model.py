@@ -77,7 +77,7 @@ class SystemInspection(BaseModel):
     system_url: str = Field(..., description="시스템 URL")
     inspection_start: datetime = Field(..., description="점검 시작 시간")
     inspection_end: Optional[datetime] = Field(None, description="점검 종료 시간")
-    menu_results: List[InspectionMenuResult] = Field(default=[], description="메뉴별 점검 결과")
+    inspection_results: List[InspectionMenuResult] = Field(default=[], description="메뉴별 점검 결과")
     inspection_type: str = Field(..., description="점검 유형(자동/수동)")
     created_by: str = Field(..., description="점검 생성자 ID")
     
@@ -92,7 +92,7 @@ class SystemInspectionCreate(SystemInspection):
 class SystemInspectionUpdate(BaseModel):
     """시스템 점검 이력 업데이트 모델"""
     inspection_end: Optional[datetime] = None
-    menu_results: Optional[List[InspectionMenuResult]] = None
+    inspection_results: Optional[List[InspectionMenuResult]] = None
     
     class Config:
         orm_mode = True
