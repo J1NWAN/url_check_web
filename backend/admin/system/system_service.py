@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 COLLECTION = "systems"
 
 # 점검 이력 컬렉션 이름
-INSPECTION_COLLECTION = "system_inspections"
+INSPECTION_COLLECTION = "inspection_history"
 
 # HTTP 상태 코드에 대한 한글 설명
 HTTP_STATUS_TEXT = {
@@ -269,9 +269,10 @@ async def perform_system_inspection(system_id: str, inspection_type: str, create
             "system_eng_name": system_data.get("eng_name", ""),
             "system_kor_name": system_data.get("kor_name", ""),
             "system_url": system_url,
-            "inspection_start": inspection_start.isoformat(),
+            "inspection_start": inspection_start,  # timestamp로 저장하기 위해 datetime 객체 그대로 저장
             "inspection_type": inspection_type,
             "created_by": created_by,
+            "created_at": inspection_start,  # created_at 필드 추가 (datetime 객체)
             "inspection_results": []
         }
         
@@ -342,17 +343,12 @@ async def perform_system_inspection(system_id: str, inspection_type: str, create
         inspection_end = datetime.now()
         
         # 점검 결과 업데이트
-        inspection_data["inspection_end"] = inspection_end.isoformat()
+        inspection_data["inspection_end"] = inspection_end  # timestamp로 저장하기 위해 datetime 객체 그대로 저장
         inspection_data["inspection_results"] = inspection_results_data
         
         # 고유 ID 생성
         unique_id = f"{system_id}_{int(inspection_start.timestamp())}"
         inspection_data["id"] = unique_id
-        
-        # ISO 문자열로 변환된 날짜를 datetime 객체로 변환하여 응답용 데이터 생성
-        response_data = dict(inspection_data)
-        response_data["inspection_start"] = inspection_start
-        response_data["inspection_end"] = inspection_end
         
         return inspection_data
     
@@ -385,8 +381,7 @@ async def save_inspection_history(inspection_systems: List[Dict[str, Any]], docu
         # 문서 생성
         inspections_ref.set({
             "inspection_systems": inspection_systems,
-            "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat()
+            "created_at": datetime.now(),  # timestamp로 저장하기 위해 datetime 객체 그대로 저장
         })
         
         return document_id
