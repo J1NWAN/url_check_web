@@ -1,15 +1,15 @@
 {% extends "common/layout/admin-layout.html" %}
 
-{% block title %}Dashboard - URL Checker{% endblock %}
+{% block title %}대시보드 - URL Checker{% endblock %}
 
-{% block breadcrumb_title %}Dashboard{% endblock %}
+{% block breadcrumb_title %}대시보드{% endblock %}
 
 {% block content %}
   <div class="row">
     <div class="ms-3">
-      <h3 class="mb-0 h4 font-weight-bolder">Dashboard</h3>
+      <h3 class="mb-0 h4 font-weight-bolder">대시보드</h3>
       <p class="mb-4">
-        Check the sales, value and bounce rate by country.
+        최근 점검 결과를 간략하게 확인할 수 있습니다.
       </p>
     </div>
     <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
@@ -17,8 +17,8 @@
         <div class="card-header p-2 ps-3">
           <div class="d-flex justify-content-between">
             <div>
-              <p class="text-sm mb-0 text-capitalize">Today's Money</p>
-              <h4 class="mb-0">$53k</h4>
+              <p class="text-sm mb-0 text-capitalize">금일 점검 횟수</p>
+              <h4 class="mb-0" id="today-inspection-count">-</h4>
             </div>
             <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
               <i class="material-symbols-rounded opacity-10">weekend</i>
@@ -36,8 +36,8 @@
         <div class="card-header p-2 ps-3">
           <div class="d-flex justify-content-between">
             <div>
-              <p class="text-sm mb-0 text-capitalize">Today's Users</p>
-              <h4 class="mb-0">2300</h4>
+              <p class="text-sm mb-0 text-capitalize">금일 정상 시스템</p>
+              <h4 class="mb-0" id="today-success-count">-</h4>
             </div>
             <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
               <i class="material-symbols-rounded opacity-10">person</i>
@@ -55,8 +55,8 @@
         <div class="card-header p-2 ps-3">
           <div class="d-flex justify-content-between">
             <div>
-              <p class="text-sm mb-0 text-capitalize">Ads Views</p>
-              <h4 class="mb-0">3,462</h4>
+              <p class="text-sm mb-0 text-capitalize">금일 오류 시스템</p>
+              <h4 class="mb-0" id="today-error-count">-</h4>
             </div>
             <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
               <i class="material-symbols-rounded opacity-10">leaderboard</i>
@@ -74,8 +74,8 @@
         <div class="card-header p-2 ps-3">
           <div class="d-flex justify-content-between">
             <div>
-              <p class="text-sm mb-0 text-capitalize">Sales</p>
-              <h4 class="mb-0">$103,430</h4>
+              <p class="text-sm mb-0 text-capitalize">이번달 점검 횟수</p>
+              <h4 class="mb-0" id="month-inspection-count">-</h4>
             </div>
             <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
               <i class="material-symbols-rounded opacity-10">weekend</i>
@@ -496,6 +496,34 @@
 
 {% block page_scripts %}
 <script>
+  // 공통 인증 모듈 초기화
+  initPage(() => {
+    // 대시보드 통계 데이터 가져오기
+    fetchDashboardStats();
+  });
+  
+  // 대시보드 통계 데이터 가져오는 함수
+  async function fetchDashboardStats() {
+    try {
+      const response = await fetch('/api/dashboard/stats');
+      
+      if (!response.ok) {
+        throw new Error('통계 데이터를 가져오는 중 오류가 발생했습니다.');
+      }
+      
+      const data = await response.json();
+      
+      // 데이터를 화면에 표시
+      document.getElementById('today-inspection-count').textContent = data.today_inspection_count;
+      document.getElementById('today-success-count').textContent = data.today_success_system_count;
+      document.getElementById('today-error-count').textContent = data.today_error_system_count;
+      document.getElementById('month-inspection-count').textContent = data.month_inspection_count;
+    } catch (error) {
+      console.error('대시보드 통계 데이터 로딩 오류:', error);
+      // 오류 처리 - 필요시 사용자에게 알림
+    }
+  }
+  
   var ctx = document.getElementById("chart-bars").getContext("2d");
   
   new Chart(ctx, {
