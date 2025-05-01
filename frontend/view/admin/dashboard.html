@@ -93,8 +93,8 @@
     <div class="col-lg-4 col-md-6 mt-4 mb-4">
       <div class="card">
         <div class="card-body">
-          <h6 class="mb-0 ">Website Views</h6>
-          <p class="text-sm ">Last Campaign Performance</p>
+          <h6 class="mb-0 ">이번주 점검 통계</h6>
+          <p class="text-sm ">정상/오류 건수 현황</p>
           <div class="pe-2">
             <div class="chart">
               <canvas id="chart-bars" class="chart-canvas" height="170"></canvas>
@@ -103,7 +103,7 @@
           <hr class="dark horizontal">
           <div class="d-flex ">
             <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
-            <p class="mb-0 text-sm"> campaign sent 2 days ago </p>
+            <p class="mb-0 text-sm" id="weekly-bar-date-range"> </p>
           </div>
         </div>
       </div>
@@ -111,7 +111,7 @@
     <div class="col-lg-4 col-md-6 mt-4 mb-4">
       <div class="card ">
         <div class="card-body">
-          <h6 class="mb-0 "> Daily Sales </h6>
+          <h6 class="mb-0 "> 이번주 점검 횟수 통계 </h6>
           <p class="text-sm "> (<span class="font-weight-bolder">+15%</span>) increase in today sales. </p>
           <div class="pe-2">
             <div class="chart">
@@ -121,7 +121,7 @@
           <hr class="dark horizontal">
           <div class="d-flex ">
             <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
-            <p class="mb-0 text-sm"> updated 4 min ago </p>
+            <p class="mb-0 text-sm" id="weekly-line-date-range"> </p>
           </div>
         </div>
       </div>
@@ -129,8 +129,8 @@
     <div class="col-lg-4 mt-4 mb-3">
       <div class="card">
         <div class="card-body">
-          <h6 class="mb-0 ">Completed Tasks</h6>
-          <p class="text-sm ">Last Campaign Performance</p>
+          <h6 class="mb-0" id="current-year-title">0000년 점검 횟수 통계</h6>
+          <p class="text-sm">월별 점검 건수 현황</p>
           <div class="pe-2">
             <div class="chart">
               <canvas id="chart-line-tasks" class="chart-canvas" height="170"></canvas>
@@ -139,7 +139,7 @@
           <hr class="dark horizontal">
           <div class="d-flex ">
             <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
-            <p class="mb-0 text-sm">just updated</p>
+            <p class="mb-0 text-sm" id="yearly-date-range"> </p>
           </div>
         </div>
       </div>
@@ -500,7 +500,66 @@
   initPage(() => {
     // 대시보드 통계 데이터 가져오기
     fetchDashboardStats();
+    
+    // 현재 연도 표시
+    updateYearTitle();
   });
+  
+  // 현재 연도 표시 함수
+  function updateYearTitle() {
+    const currentYear = new Date().getFullYear();
+    const yearTitleElement = document.getElementById('current-year-title');
+    if (yearTitleElement) {
+      yearTitleElement.textContent = currentYear + '년 점검 횟수 통계';
+    }
+    
+    // 연간 날짜 범위 업데이트
+    const yearlyDateRange = document.getElementById('yearly-date-range');
+    if (yearlyDateRange) {
+      yearlyDateRange.textContent = currentYear + '-01 ~ ' + currentYear + '-12';
+    }
+    
+    // 주간 날짜 범위 업데이트
+    updateWeeklyDateRange();
+  }
+  
+  // 주간 날짜 범위 계산 및 표시 함수
+  function updateWeeklyDateRange() {
+    // 현재 날짜 기준으로 이번 주의 일요일과 토요일 구하기
+    const now = new Date();
+    const currentDay = now.getDay(); // 0: 일요일, 1: 월요일, ..., 6: 토요일
+    
+    // 이번 주 일요일 계산 (현재 날짜 - 현재 요일)
+    const sunday = new Date(now);
+    sunday.setDate(now.getDate() - currentDay);
+    
+    // 이번 주 토요일 계산 (일요일 + 6일)
+    const saturday = new Date(sunday);
+    saturday.setDate(sunday.getDate() + 6);
+    
+    // 날짜 포맷 함수
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    // 날짜 범위 텍스트 생성
+    const dateRangeText = `${formatDate(sunday)} ~ ${formatDate(saturday)}`;
+    
+    // 주간 막대 차트 날짜 범위 업데이트
+    const weeklyBarDateRange = document.getElementById('weekly-bar-date-range');
+    if (weeklyBarDateRange) {
+      weeklyBarDateRange.textContent = dateRangeText;
+    }
+    
+    // 주간 라인 차트 날짜 범위 업데이트
+    const weeklyLineDateRange = document.getElementById('weekly-line-date-range');
+    if (weeklyLineDateRange) {
+      weeklyLineDateRange.textContent = dateRangeText;
+    }
+  }
   
   // 대시보드 통계 데이터 가져오는 함수
   async function fetchDashboardStats() {
@@ -529,24 +588,42 @@
   new Chart(ctx, {
     type: "bar",
     data: {
-      labels: ["월", "화", "수", "목", "금", "토", "일"],
-      datasets: [{
-        label: "URL 점검 수",
-        tension: 0.4,
-        borderWidth: 0,
-        borderRadius: 4,
-        borderSkipped: false,
-        backgroundColor: "rgba(255, 255, 255, .8)",
-        data: [50, 45, 53, 48, 49, 42, 40],
-        maxBarThickness: 6
-      }],
+      labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+      datasets: [
+        {
+          label: "정상",
+          tension: 0.4,
+          borderWidth: 0,
+          borderRadius: 0,
+          borderSkipped: false,
+          backgroundColor: "rgba(76, 175, 80, 0.8)",  // 초록색
+          data: [35, 30, 38, 33, 34, 27, 25],
+          maxBarThickness: 25
+        },
+        {
+          label: "오류",
+          tension: 0.4,
+          borderWidth: 0,
+          borderRadius: 0,
+          borderSkipped: false,
+          backgroundColor: "rgba(244, 67, 53, 0.8)",  // 빨간색
+          data: [15, 15, 15, 15, 15, 15, 15],
+          maxBarThickness: 25
+        }
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      barPercentage: 0.8,
+      categoryPercentage: 0.8,
       plugins: {
         legend: {
           display: false,
+          position: 'top',
+          labels: {
+            color: "#fff"
+          }
         }
       },
       interaction: {
@@ -555,6 +632,7 @@
       },
       scales: {
         y: {
+          stacked: true,
           grid: {
             drawBorder: false,
             display: true,
@@ -576,9 +654,10 @@
               lineHeight: 2
             },
             color: "#fff"
-          },
+          }
         },
         x: {
+          stacked: true,
           grid: {
             drawBorder: false,
             display: true,
@@ -589,19 +668,19 @@
           },
           ticks: {
             display: true,
-            color: '#f8f9fa',
+            color: '#000000',
             padding: 10,
             font: {
               size: 14,
-              weight: 300,
+              weight: 500,
               family: "Roboto",
               style: 'normal',
               lineHeight: 2
-            },
-          }
-        },
-      },
-    },
+            }
+          },
+        }
+      }
+    }
   });
   
   var ctx2 = document.getElementById("chart-line").getContext("2d");
@@ -609,19 +688,18 @@
   new Chart(ctx2, {
     type: "line",
     data: {
-      labels: ["4월", "5월", "6월", "7월", "8월", "9월", "10월"],
+      labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
       datasets: [{
-        label: "성공률",
-        tension: 0,
-        borderWidth: 0,
-        pointRadius: 5,
-        pointBackgroundColor: "rgba(255, 255, 255, .8)",
-        pointBorderColor: "transparent",
-        borderColor: "rgba(255, 255, 255, .8)",
-        borderWidth: 4,
+        label: "점검 횟수",
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: "#4CAF50",
+        pointBorderColor: "#fff",
+        borderColor: "#4CAF50",
         backgroundColor: "transparent",
-        fill: true,
-        data: [87, 92, 88, 90, 91, 93, 90],
+        fill: false,
+        data: [142, 228, 440, 250, 350, 180, 210],
         maxBarThickness: 6
       }],
     },
@@ -631,6 +709,13 @@
       plugins: {
         legend: {
           display: false,
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ' + context.raw + '회';
+            }
+          }
         }
       },
       interaction: {
@@ -644,45 +729,144 @@
             display: true,
             drawOnChartArea: true,
             drawTicks: false,
-            borderDash: [5, 5],
-            color: 'rgba(255, 255, 255, .2)'
+            color: 'rgba(0, 0, 0, 0.1)',
+            borderDash: []
           },
           ticks: {
             display: true,
-            color: '#f8f9fa',
+            color: '#666',
             padding: 10,
             font: {
-              size: 14,
-              weight: 300,
+              size: 11,
+              weight: 400,
               family: "Roboto",
               style: 'normal',
-              lineHeight: 2
+              lineHeight: 1.5
             },
-          }
+            callback: function(value) {
+              return value + '회';
+            },
+            stepSize: 200  // 200회 단위로 눈금 표시
+          },
+          suggestedMin: 0,
+          suggestedMax: 600
         },
         x: {
           grid: {
             drawBorder: false,
-            display: false,
-            drawOnChartArea: false,
+            display: true,
+            drawOnChartArea: true,
             drawTicks: false,
-            borderDash: [5, 5]
+            color: 'rgba(0, 0, 0, 0.05)'
           },
           ticks: {
             display: true,
-            color: '#f8f9fa',
+            color: '#666',
             padding: 10,
             font: {
-              size: 14,
-              weight: 300,
+              size: 11,
+              weight: 400,
               family: "Roboto",
               style: 'normal',
-              lineHeight: 2
-            },
+              lineHeight: 1.5
+            }
           }
-        },
-      },
+        }
+      }
+    }
+  });
+  
+  var ctx3 = document.getElementById("chart-line-tasks").getContext("2d");
+  
+  new Chart(ctx3, {
+    type: "line",
+    data: {
+      labels: ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"],
+      datasets: [{
+        label: "점검 횟수",
+        tension: 0.3,
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: "#4CAF50",
+        pointBorderColor: "#fff",
+        borderColor: "#4CAF50",
+        backgroundColor: "transparent",
+        fill: false,
+        data: [1250, 1380, 1450, 1650, 1700, 1580, 1750, 1830, 1590, 1680, 1550, 1490],
+        maxBarThickness: 6
+      }],
     },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ' + context.raw + '회';
+            }
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index',
+      },
+      scales: {
+        y: {
+          grid: {
+            drawBorder: false,
+            display: true,
+            drawOnChartArea: true,
+            drawTicks: false,
+            color: 'rgba(0, 0, 0, 0.1)',
+            borderDash: []
+          },
+          ticks: {
+            display: true,
+            color: '#666',
+            padding: 10,
+            font: {
+              size: 11,
+              weight: 400,
+              family: "Roboto",
+              style: 'normal',
+              lineHeight: 1.5
+            },
+            callback: function(value) {
+              return value + '회';
+            },
+            stepSize: 500  // 500회 단위로 눈금 표시
+          },
+          suggestedMin: 0,
+          suggestedMax: 2000
+        },
+        x: {
+          grid: {
+            drawBorder: false,
+            display: true,
+            drawOnChartArea: true,
+            drawTicks: false,
+            color: 'rgba(0, 0, 0, 0.05)'
+          },
+          ticks: {
+            display: true,
+            color: '#666',
+            padding: 10,
+            font: {
+              size: 11,
+              weight: 400,
+              family: "Roboto",
+              style: 'normal',
+              lineHeight: 1.5
+            }
+          }
+        }
+      }
+    }
   });
   
   // 사이드바 활성화
