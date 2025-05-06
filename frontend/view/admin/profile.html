@@ -52,25 +52,8 @@
       </div>
       <div class="col-lg-4 col-md-6 my-sm-auto ms-sm-auto me-sm-0 mx-auto mt-3">
         <div class="nav-wrapper position-relative end-0">
-          <ul class="nav nav-pills nav-fill p-1" role="tablist">
-            <li class="nav-item">
-              <a class="nav-link mb-0 px-0 py-1 active " data-bs-toggle="tab" href="javascript:;" role="tab" aria-selected="true">
-                <i class="material-symbols-rounded text-lg position-relative">person</i>
-                <span class="ms-1">사용자</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link mb-0 px-0 py-1 " data-bs-toggle="tab" href="javascript:;" role="tab" aria-selected="false">
-                <i class="material-symbols-rounded text-lg position-relative">email</i>
-                <span class="ms-1">메일</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link mb-0 px-0 py-1 " data-bs-toggle="tab" href="javascript:;" role="tab" aria-selected="false">
-                <i class="material-symbols-rounded text-lg position-relative">settings</i>
-                <span class="ms-1">설정</span>
-              </a>
-            </li>
+          <ul class="nav nav-pills nav-fill p-1" role="tablist" id="profile-tabs">
+            <!-- 탭 목록은 JavaScript에서 사용자 권한에 따라 동적으로 생성됩니다 -->
           </ul>
         </div>
       </div>
@@ -80,48 +63,36 @@
         <div class="col-12 col-xl-4">
           <div class="card card-plain h-100">
             <div class="card-header pb-0 p-3">
-              <h6 class="mb-0">Platform Settings</h6>
+              <h6 class="mb-0">알림 설정</h6>
             </div>
             <div class="card-body p-3">
-              <h6 class="text-uppercase text-body text-xs font-weight-bolder">권한</h6>
+              <h6 class="text-uppercase text-body text-xs font-weight-bolder">이메일</h6>
               <ul class="list-group">
                 <li class="list-group-item border-0 px-0">
                   <div class="form-check form-switch ps-0">
                     <input class="form-check-input ms-auto" type="checkbox" id="flexSwitchCheckDefault" checked>
-                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault">Email me when someone follows me</label>
+                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault">시스템 오류 발생 시 이메일 수신</label>
                   </div>
                 </li>
                 <li class="list-group-item border-0 px-0">
                   <div class="form-check form-switch ps-0">
                     <input class="form-check-input ms-auto" type="checkbox" id="flexSwitchCheckDefault1">
-                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault1">Email me when someone answers on my post</label>
-                  </div>
-                </li>
-                <li class="list-group-item border-0 px-0">
-                  <div class="form-check form-switch ps-0">
-                    <input class="form-check-input ms-auto" type="checkbox" id="flexSwitchCheckDefault2" checked>
-                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault2">Email me when someone mentions me</label>
+                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault1">금일 일일점검 미완료 시 이메일 수신</label>
                   </div>
                 </li>
               </ul>
-              <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-4">Application</h6>
+              <h6 class="text-uppercase text-body text-xs font-weight-bolder">모바일</h6>
               <ul class="list-group">
                 <li class="list-group-item border-0 px-0">
                   <div class="form-check form-switch ps-0">
-                    <input class="form-check-input ms-auto" type="checkbox" id="flexSwitchCheckDefault3">
-                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault3">New launches and projects</label>
+                    <input class="form-check-input ms-auto" type="checkbox" id="flexSwitchCheckDefault" checked>
+                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault">시스템 오류 발생 시 모바일 알림 수신</label>
                   </div>
                 </li>
                 <li class="list-group-item border-0 px-0">
                   <div class="form-check form-switch ps-0">
-                    <input class="form-check-input ms-auto" type="checkbox" id="flexSwitchCheckDefault4" checked>
-                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault4">Monthly product updates</label>
-                  </div>
-                </li>
-                <li class="list-group-item border-0 px-0 pb-0">
-                  <div class="form-check form-switch ps-0">
-                    <input class="form-check-input ms-auto" type="checkbox" id="flexSwitchCheckDefault5">
-                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault5">Subscribe to newsletter</label>
+                    <input class="form-check-input ms-auto" type="checkbox" id="flexSwitchCheckDefault1">
+                    <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="flexSwitchCheckDefault1">금일 일일점검 미완료 시 모바일 알림 수신</label>
                   </div>
                 </li>
               </ul>
@@ -344,6 +315,10 @@
         for (let i = 0; i < userPhoneElements.length; i++) {
           userPhoneElements[i].textContent = userData.phone || '';
         }
+        
+        // 사용자 권한에 따라 탭 메뉴 구성
+        renderProfileTabs(userData.role || 'user');
+        
       } catch (error) {
         console.error('프로필 정보 가져오기 오류:', error);
         
@@ -364,11 +339,75 @@
             for (let i = 0; i < userIdElements.length; i++) {
               userIdElements[i].textContent = tokenPayload.userid || '';
             }
+            
+            // 토큰에서 가져온 권한으로 탭 메뉴 구성
+            renderProfileTabs(tokenPayload.role || 'user');
+          } else {
+            // 기본 권한으로 탭 메뉴 구성
+            renderProfileTabs('user');
           }
         } catch (e) {
           console.error('토큰 파싱 오류:', e);
+          // 기본 권한으로 탭 메뉴 구성
+          renderProfileTabs('user');
         }
       }
+    }
+    
+    // 사용자 권한에 따라 탭 메뉴 구성
+    function renderProfileTabs(userRole) {
+      const tabsContainer = document.getElementById('profile-tabs');
+      tabsContainer.innerHTML = ''; // 기존 탭 초기화
+      
+      // 탭 정의
+      const tabs = [];
+      
+      // super-admin 권한을 가진 사용자는 사용자 탭도 볼 수 있음
+      if (userRole === 'super-admin') {
+        tabs.push({
+          id: 'user-tab',
+          icon: 'person',
+          text: '사용자',
+          active: true
+        });
+      }
+      
+      // 모든 사용자가 볼 수 있는 탭
+      tabs.push({
+        id: 'email-tab',
+        icon: 'email',
+        text: '메일',
+        active: userRole !== 'super-admin' // super-admin이 아닌 경우 메일 탭이 기본 활성화
+      });
+      
+      tabs.push({
+        id: 'settings-tab',
+        icon: 'settings',
+        text: '설정',
+        active: false
+      });
+      
+      // 탭 생성
+      tabs.forEach(tab => {
+        const li = document.createElement('li');
+        li.className = 'nav-item';
+        
+        const a = document.createElement('a');
+        a.className = `nav-link mb-0 px-0 py-1 ${tab.active ? 'active' : ''}`;
+        a.setAttribute('data-bs-toggle', 'tab');
+        a.href = 'javascript:;';
+        a.role = 'tab';
+        a.setAttribute('aria-selected', tab.active ? 'true' : 'false');
+        a.id = tab.id;
+        
+        a.innerHTML = `
+          <i class="material-symbols-rounded text-lg position-relative">${tab.icon}</i>
+          <span class="ms-1">${tab.text}</span>
+        `;
+        
+        li.appendChild(a);
+        tabsContainer.appendChild(li);
+      });
     }
     
     // 프로필 업데이트
