@@ -93,8 +93,8 @@
     <div class="col-lg-4 col-md-6 mt-4 mb-4">
       <div class="card">
         <div class="card-body">
-          <h6 class="mb-0 ">이번주 점검 통계</h6>
-          <p class="text-sm ">정상/오류 건수 현황</p>
+          <h6 class="mb-0 ">시스템별 최신 점검 상태</h6>
+          <p class="text-sm ">각 시스템의 최신 점검 결과</p>
           <div class="pe-2">
             <div class="chart">
               <canvas id="chart-bars" class="chart-canvas" height="170"></canvas>
@@ -103,7 +103,7 @@
           <hr class="dark horizontal">
           <div class="d-flex ">
             <i class="material-symbols-rounded text-sm my-auto me-1">schedule</i>
-            <p class="mb-0 text-sm" id="weekly-bar-date-range"> </p>
+            <p class="mb-0 text-sm" id="system-bar-date"> </p>
           </div>
         </div>
       </div>
@@ -554,7 +554,7 @@
     const dateRangeText = `${formatDate(sunday)} ~ ${formatDate(saturday)}`;
     
     // 주간 막대 차트 날짜 범위 업데이트
-    const weeklyBarDateRange = document.getElementById('weekly-bar-date-range');
+    const weeklyBarDateRange = document.getElementById('system-bar-date');
     if (weeklyBarDateRange) {
       weeklyBarDateRange.textContent = dateRangeText;
     }
@@ -583,6 +583,11 @@
       document.getElementById('today-error-count').textContent = data.today_error_system_count;
       document.getElementById('month-inspection-count').textContent = data.month_inspection_count;
       
+      // 시스템별 최신 통계 데이터가 있는 경우 차트 업데이트
+      if (data.system_stats) {
+        updateSystemStatusChart(data.system_stats);
+      }
+      
       // 주간 데이터가 있는 경우 차트 업데이트
       if (data.weekly_inspection_stats) {
         updateWeeklyCharts(data.weekly_inspection_stats);
@@ -600,21 +605,50 @@
   
   // 주간 차트 업데이트 함수
   function updateWeeklyCharts(weeklyStats) {
-    // 이번주 점검 통계 차트 업데이트 (막대 차트)
-    updateWeeklyBarChart(weeklyStats);
-    
     // 이번주 점검 횟수 통계 차트 업데이트 (라인 차트)
     updateWeeklyLineChart(weeklyStats);
   }
   
-  // 이번주 점검 통계 막대 차트 업데이트
-  function updateWeeklyBarChart(weeklyStats) {
+  // 시스템별 최신 상태 차트 업데이트
+  function updateSystemStatusChart(systemStats) {
     const ctx = document.getElementById("chart-bars").getContext("2d");
+    
+    // 시스템 중 가장 최신 점검 일시를 찾아 표시
+    const systemBarDate = document.getElementById("system-bar-date");
+    if (systemBarDate && systemStats.latest_datetime && systemStats.latest_datetime.length > 0) {
+      // 가장 최신 점검 일시 찾기 (가장 마지막으로 점검된 시스템의 일시)
+      let latestDateTime = '';
+      for (let i = 0; i < systemStats.latest_datetime.length; i++) {
+        if (systemStats.latest_datetime[i] && 
+            (!latestDateTime || systemStats.latest_datetime[i] > latestDateTime)) {
+          latestDateTime = systemStats.latest_datetime[i];
+        }
+      }
+      
+      if (latestDateTime) {
+        systemBarDate.textContent = `최신 점검 일시: ${latestDateTime}`;
+      } else {
+        // 점검 일시가 없는 경우 현재 시간 표시
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        systemBarDate.textContent = `현재 시간 기준: ${year}-${month}-${day} ${hours}시 ${minutes}분 ${seconds}초`;
+      }
+    }
+    
+    // 데이터의 최대값 계산 (정상 + 오류 메뉴 수 중 최대값)
+    const maxMenuCount = Math.max(
+      ...systemStats.success_data.map((val, idx) => val + systemStats.error_data[idx])
+    );
     
     new Chart(ctx, {
       type: "bar",
       data: {
-        labels: weeklyStats.labels,
+        labels: systemStats.labels,
         datasets: [
           {
             label: "정상",
@@ -623,7 +657,7 @@
             borderRadius: 0,
             borderSkipped: false,
             backgroundColor: "rgba(76, 175, 80, 0.8)",  // 초록색
-            data: weeklyStats.success_data,
+            data: systemStats.success_data,
             maxBarThickness: 25
           },
           {
@@ -633,7 +667,7 @@
             borderRadius: 0,
             borderSkipped: false,
             backgroundColor: "rgba(244, 67, 53, 0.8)",  // 빨간색
-            data: weeklyStats.error_data,
+            data: systemStats.error_data,
             maxBarThickness: 25
           }
         ],
@@ -645,10 +679,22 @@
         categoryPercentage: 0.8,
         plugins: {
           legend: {
-            display: false,
+            display: true,
             position: 'top',
             labels: {
-              color: "#fff"
+              color: "#666"
+            }
+          },
+          tooltip: {
+            callbacks: {
+              title: function(context) {
+                return context[0].label;
+              },
+              label: function(context) {
+                const label = context.dataset.label || '';
+                const value = context.parsed.y;
+                return label + ' 메뉴: ' + value + '개';
+              }
             }
           }
         },
@@ -669,9 +715,11 @@
             },
             ticks: {
               suggestedMin: 0,
-              suggestedMax: 60,
+              suggestedMax: maxMenuCount > 0 ? maxMenuCount : 3, // 메뉴 합계가 최대값이 되도록
               beginAtZero: true,
               padding: 10,
+              precision: 0,  // 소수점 없이 정수로만 표시
+              stepSize: 1,   // 눈금 간격 1로 설정
               font: {
                 size: 14,
                 weight: 300,

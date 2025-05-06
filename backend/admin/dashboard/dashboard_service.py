@@ -29,7 +29,35 @@ async def get_dashboard_statistics():
         # 점검 이력 컬렉션 참조
         inspections_ref = db.collection('inspection_history')
         
-        # 모든 문서 가져와서 직접 필터링하기
+        # 시스템 컬렉션 참조
+        systems_ref = db.collection('systems')
+        
+        # 모든 시스템 데이터 가져오기
+        all_systems = list(systems_ref.get())
+        
+        # 등록된 시스템 수 및 이름 목록
+        system_names = []
+        system_data = {}
+        
+        for system in all_systems:
+            system_dict = system.to_dict()
+            system_id = system.id
+            
+            # 시스템 이름(한글명, 영문명)
+            system_name = system_dict.get('kor_name') or system_dict.get('eng_name') or system_id
+            system_names.append(system_name)
+            
+            # 시스템 데이터 저장
+            system_data[system_id] = {
+                'name': system_name,
+                'latest_status': None,  # 아직 점검 결과가 없음
+                'success_count': 0,
+                'error_count': 0
+            }
+        
+        logger.info(f"등록된 시스템 수: {len(system_names)}")
+        
+        # 점검 이력 컬렉션에서 모든 문서 가져오기
         all_inspections = list(inspections_ref.get())
         logger.info(f"전체 inspection_history 문서 수: {len(all_inspections)}")
         
@@ -50,6 +78,113 @@ async def get_dashboard_statistics():
                     dt = created_at.timestamp()
                     dt_str = datetime.fromtimestamp(dt).strftime('%Y-%m-%d %H:%M:%S')
                     logger.info(f"변환된 날짜 문자열: {dt_str}")
+        
+        # 각 시스템별 최신 점검 결과 찾기
+        latest_inspections = {}  # 시스템별 최신 점검 기록 (system_id -> inspection)
+        latest_dates = {}  # 시스템별 최신 점검 날짜 (system_id -> datetime)
+        
+        for inspection in all_inspections:
+            inspection_data = inspection.to_dict()
+            
+            # 날짜 필드 확인
+            date_field = inspection_data.get('created_at') or inspection_data.get('inspection_start')
+            if not date_field:
+                continue
+                
+            # 날짜 객체 얻기
+            inspection_datetime = None
+            
+            # 1. 문자열인 경우
+            if isinstance(date_field, str):
+                try:
+                    inspection_datetime = datetime.fromisoformat(date_field)
+                except ValueError:
+                    continue
+            
+            # 2. datetime 객체인 경우
+            elif isinstance(date_field, datetime):
+                inspection_datetime = date_field
+            
+            # 3. timestamp 객체인 경우 (Firestore 타임스탬프)
+            elif hasattr(date_field, 'timestamp'):
+                dt = date_field.timestamp()
+                inspection_datetime = datetime.fromtimestamp(dt)
+            
+            # 타임존 정보 제거
+            inspection_datetime = normalize_datetime(inspection_datetime)
+            
+            # inspection_systems 배열이 있는 경우 처리
+            if 'inspection_systems' in inspection_data:
+                for system in inspection_data['inspection_systems']:
+                    system_id = system.get('system_id')
+                    if not system_id:
+                        continue
+                    
+                    # 해당 시스템이 데이터베이스에 등록되어 있는지 확인
+                    if system_id not in system_data:
+                        continue
+                    
+                    # 기존 최신 점검 날짜와 비교
+                    if system_id not in latest_dates or inspection_datetime > latest_dates[system_id]:
+                        latest_dates[system_id] = inspection_datetime
+                        latest_inspections[system_id] = system
+            else:
+                # 오래된 형식: 직접 system_id 필드가 있는 경우
+                system_id = inspection_data.get('system_id')
+                if not system_id or system_id not in system_data:
+                    continue
+                
+                # 기존 최신 점검 날짜와 비교
+                if system_id not in latest_dates or inspection_datetime > latest_dates[system_id]:
+                    latest_dates[system_id] = inspection_datetime
+                    latest_inspections[system_id] = inspection_data
+        
+        # 각 시스템의 최신 상태 분석
+        success_count = 0
+        error_count = 0
+        
+        # 시스템별 결과 기록 및 최신 점검 일시 저장
+        system_latest_datetime = {}
+        
+        for system_id, inspection in latest_inspections.items():
+            # 시스템의 최신 점검 일시 저장
+            inspection_datetime = latest_dates[system_id]
+            formatted_datetime = inspection_datetime.strftime('%Y-%m-%d %H시 %M분 %S초')
+            system_latest_datetime[system_id] = formatted_datetime
+            
+            # 메뉴별 성공/실패 카운트 초기화
+            success_count = 0
+            error_count = 0
+            
+            # 새로운 형식 (inspection_systems 배열 내 시스템)
+            if 'inspection_results' in inspection:
+                # 각 메뉴(URL)별 결과 분석
+                for result in inspection['inspection_results']:
+                    status_code = result.get('status_code', 0)
+                    if status_code >= 200 and status_code < 400:
+                        success_count += 1
+                    else:
+                        error_count += 1
+                
+                # 시스템 상태 업데이트 (메뉴별 정상/오류 카운트)
+                system_data[system_id]['latest_status'] = (error_count == 0)
+                system_data[system_id]['success_count'] = success_count
+                system_data[system_id]['error_count'] = error_count
+                system_data[system_id]['latest_datetime'] = formatted_datetime
+            else:
+                # 오류 데이터로 간주
+                system_data[system_id]['latest_status'] = False
+                system_data[system_id]['success_count'] = 0
+                system_data[system_id]['error_count'] = 1
+                system_data[system_id]['latest_datetime'] = formatted_datetime
+        
+        # 시스템별 최신 통계 데이터 구성
+        system_stats = {
+            "labels": system_names,
+            "success_data": [system_data[system_id]['success_count'] for system_id in system_data],
+            "error_data": [system_data[system_id]['error_count'] for system_id in system_data],
+            "latest_datetime": [system_data[system_id].get('latest_datetime', '') for system_id in system_data]
+        }
         
         # 오늘 날짜 계산 (로컬 시간 기준, 타임존 정보 없음)
         today_local = datetime.now()
@@ -353,6 +488,8 @@ async def get_dashboard_statistics():
             "today_success_system_count": today_success_count,
             "today_error_system_count": today_error_count,
             "month_inspection_count": month_count,
+            # 시스템별 최신 통계 데이터 추가
+            "system_stats": system_stats,
             # 이번 주 점검 통계 데이터 추가
             "weekly_inspection_stats": {
                 "labels": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
