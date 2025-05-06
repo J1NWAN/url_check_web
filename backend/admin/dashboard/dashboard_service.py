@@ -7,6 +7,12 @@ import json
 # 로거 설정
 logger = logging.getLogger(__name__)
 
+# 타임존 정보가 있는 날짜를 타임존 정보가 없는 날짜로 변환하는 함수
+def normalize_datetime(dt):
+    if dt and hasattr(dt, 'tzinfo') and dt.tzinfo is not None:
+        return dt.replace(tzinfo=None)
+    return dt
+
 async def get_dashboard_statistics():
     """대시보드에 표시할 통계 정보를 조회하는 서비스 함수"""
     try:
@@ -45,7 +51,7 @@ async def get_dashboard_statistics():
                     dt_str = datetime.fromtimestamp(dt).strftime('%Y-%m-%d %H:%M:%S')
                     logger.info(f"변환된 날짜 문자열: {dt_str}")
         
-        # 오늘 날짜 계산 (로컬 시간 기준)
+        # 오늘 날짜 계산 (로컬 시간 기준, 타임존 정보 없음)
         today_local = datetime.now()
         today_str = today_local.strftime('%Y-%m-%d')
         logger.info(f"오늘 날짜 문자열: {today_str}")
@@ -53,6 +59,20 @@ async def get_dashboard_statistics():
         # 이번 달 문자열
         this_month_str = today_local.strftime('%Y-%m')
         logger.info(f"이번 달 문자열: {this_month_str}")
+        
+        # 이번 주 시작일(일요일)과 종료일(토요일) 계산
+        current_weekday = today_local.weekday()  # 0: 월요일, 1: 화요일, ..., 6: 일요일
+        sunday_offset = (current_weekday + 1) % 7  # 일요일까지의 차이
+        
+        # 이번 주 일요일 계산
+        week_start = today_local - timedelta(days=sunday_offset)
+        week_start = datetime(week_start.year, week_start.month, week_start.day, 0, 0, 0)
+        
+        # 이번 주 토요일 계산 (일요일 + 6일)
+        week_end = week_start + timedelta(days=6)
+        week_end = datetime(week_end.year, week_end.month, week_end.day, 23, 59, 59)
+        
+        logger.info(f"이번 주 범위: {week_start.strftime('%Y-%m-%d')} ~ {week_end.strftime('%Y-%m-%d')}")
         
         # 오늘 점검 내역 수집
         today_inspections = []
@@ -70,22 +90,32 @@ async def get_dashboard_statistics():
             if len(today_inspections) < 5:
                 logger.info(f"검사 중인 문서 날짜 필드 타입: {type(date_field)}, 값: {date_field}")
             
-            # 날짜 형식에 따라 처리
-            is_today = False
+            # 날짜 객체 얻기
+            inspection_datetime = None
             
             # 1. 문자열인 경우
             if isinstance(date_field, str):
-                is_today = date_field.startswith(today_str)
+                try:
+                    inspection_datetime = datetime.fromisoformat(date_field)
+                except ValueError:
+                    # ISO 형식이 아닌 경우 스킵
+                    continue
             
             # 2. datetime 객체인 경우
             elif isinstance(date_field, datetime):
-                is_today = date_field.strftime('%Y-%m-%d') == today_str
+                inspection_datetime = date_field
             
             # 3. timestamp 객체인 경우 (Firestore 타임스탬프)
             elif hasattr(date_field, 'timestamp'):
                 # Firestore Timestamp를 datetime으로 변환
                 dt = date_field.timestamp()
-                is_today = datetime.fromtimestamp(dt).strftime('%Y-%m-%d') == today_str
+                inspection_datetime = datetime.fromtimestamp(dt)
+            
+            # 타임존 정보 제거
+            inspection_datetime = normalize_datetime(inspection_datetime)
+            
+            # 오늘 날짜인지 확인
+            is_today = inspection_datetime.strftime('%Y-%m-%d') == today_str
             
             if is_today:
                 today_inspections.append(inspection)
@@ -167,22 +197,32 @@ async def get_dashboard_statistics():
             if not date_field:
                 continue
             
-            # 날짜 형식에 따라 처리
-            is_this_month = False
+            # 날짜 객체 얻기
+            inspection_datetime = None
             
             # 1. 문자열인 경우
             if isinstance(date_field, str):
-                is_this_month = date_field.startswith(this_month_str)
+                try:
+                    inspection_datetime = datetime.fromisoformat(date_field)
+                except ValueError:
+                    # ISO 형식이 아닌 경우 스킵
+                    continue
             
             # 2. datetime 객체인 경우
             elif isinstance(date_field, datetime):
-                is_this_month = date_field.strftime('%Y-%m') == this_month_str
+                inspection_datetime = date_field
             
             # 3. timestamp 객체인 경우 (Firestore 타임스탬프)
             elif hasattr(date_field, 'timestamp'):
                 # Firestore Timestamp를 datetime으로 변환
                 dt = date_field.timestamp()
-                is_this_month = datetime.fromtimestamp(dt).strftime('%Y-%m') == this_month_str
+                inspection_datetime = datetime.fromtimestamp(dt)
+            
+            # 타임존 정보 제거
+            inspection_datetime = normalize_datetime(inspection_datetime)
+            
+            # 이번 달인지 확인
+            is_this_month = inspection_datetime.strftime('%Y-%m') == this_month_str
             
             if is_this_month:
                 month_inspections.append(inspection)
@@ -190,12 +230,179 @@ async def get_dashboard_statistics():
         month_count = len(month_inspections)
         logger.info(f"이번 달 점검 횟수: {month_count}")
         
+        # 이번 주 점검 데이터 수집 (요일별)
+        weekly_data = {
+            0: {"total": 0, "success": 0, "error": 0},  # 일요일
+            1: {"total": 0, "success": 0, "error": 0},  # 월요일
+            2: {"total": 0, "success": 0, "error": 0},  # 화요일
+            3: {"total": 0, "success": 0, "error": 0},  # 수요일
+            4: {"total": 0, "success": 0, "error": 0},  # 목요일
+            5: {"total": 0, "success": 0, "error": 0},  # 금요일
+            6: {"total": 0, "success": 0, "error": 0},  # 토요일
+        }
+        
+        # 올해 월별 점검 횟수 통계 데이터
+        current_year = today_local.year
+        monthly_data = {
+            1: 0,   # 1월
+            2: 0,   # 2월
+            3: 0,   # 3월
+            4: 0,   # 4월
+            5: 0,   # 5월
+            6: 0,   # 6월
+            7: 0,   # 7월
+            8: 0,   # 8월
+            9: 0,   # 9월
+            10: 0,  # 10월
+            11: 0,  # 11월
+            12: 0   # 12월
+        }
+        
+        # 요일별 점검 개수 및 정상/오류 개수 계산
+        for inspection in all_inspections:
+            inspection_data = inspection.to_dict()
+            # created_at 또는 inspection_start 필드 사용 (하위 호환성)
+            date_field = inspection_data.get('created_at') or inspection_data.get('inspection_start')
+            
+            # 날짜 필드가 없는 경우 스킵
+            if not date_field:
+                continue
+            
+            # 이번 주 데이터인지 확인
+            inspection_datetime = None
+            
+            # 1. 문자열인 경우 (ISO 형식 문자열 가정)
+            if isinstance(date_field, str):
+                try:
+                    inspection_datetime = datetime.fromisoformat(date_field)
+                except ValueError:
+                    # ISO 형식이 아닌 경우 스킵
+                    continue
+            
+            # 2. datetime 객체인 경우
+            elif isinstance(date_field, datetime):
+                inspection_datetime = date_field
+            
+            # 3. timestamp 객체인 경우 (Firestore 타임스탬프)
+            elif hasattr(date_field, 'timestamp'):
+                # Firestore Timestamp를 datetime으로 변환
+                dt = date_field.timestamp()
+                inspection_datetime = datetime.fromtimestamp(dt)
+            
+            # 날짜 필드가 없는 경우 스킵
+            if not inspection_datetime:
+                continue
+                
+            # 타임존 정보 제거
+            inspection_datetime = normalize_datetime(inspection_datetime)
+            
+            # 이번 주 범위에 해당하는지 확인
+            if week_start <= inspection_datetime <= week_end:
+                # 요일 구하기 (0: 월요일 -> 6: 일요일, 변환: 0: 일요일 -> 6: 토요일)
+                weekday = (inspection_datetime.weekday() + 1) % 7
+                
+                # 총 점검 횟수 증가
+                weekly_data[weekday]["total"] += 1
+                
+                # 시스템 상태 분석
+                if 'inspection_systems' in inspection_data:
+                    for system in inspection_data['inspection_systems']:
+                        # 오류가 있는지 확인
+                        has_error = False
+                        for result in system.get('inspection_results', []):
+                            status_code = result.get('status_code', 0)
+                            if status_code < 200 or status_code >= 400:
+                                has_error = True
+                                break
+                        
+                        if has_error:
+                            weekly_data[weekday]["error"] += 1
+                        else:
+                            weekly_data[weekday]["success"] += 1
+                else:
+                    # 오래된 형식: 직접 inspection_results 필드가 있는 경우
+                    inspection_results = inspection_data.get('inspection_results', [])
+                    
+                    has_error = False
+                    for result in inspection_results:
+                        status_code = result.get('status_code', 0)
+                        if status_code < 200 or status_code >= 400:
+                            has_error = True
+                            break
+                    
+                    if has_error:
+                        weekly_data[weekday]["error"] += 1
+                    else:
+                        weekly_data[weekday]["success"] += 1
+            
+            # 올해 데이터인지 확인하여 월별 통계 추가
+            if inspection_datetime.year == current_year:
+                month = inspection_datetime.month
+                
+                # 점검 횟수 증가
+                if 'inspection_systems' in inspection_data:
+                    # 여러 시스템이 있는 경우 각 시스템을 개별적으로 카운트
+                    monthly_data[month] += len(inspection_data['inspection_systems'])
+                else:
+                    # 단일 시스템 점검인 경우
+                    monthly_data[month] += 1
+        
         # 결과 반환
         result = {
             "today_inspection_count": today_count,
             "today_success_system_count": today_success_count,
             "today_error_system_count": today_error_count,
-            "month_inspection_count": month_count
+            "month_inspection_count": month_count,
+            # 이번 주 점검 통계 데이터 추가
+            "weekly_inspection_stats": {
+                "labels": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+                "success_data": [
+                    weekly_data[0]["success"],
+                    weekly_data[1]["success"],
+                    weekly_data[2]["success"],
+                    weekly_data[3]["success"],
+                    weekly_data[4]["success"],
+                    weekly_data[5]["success"],
+                    weekly_data[6]["success"]
+                ],
+                "error_data": [
+                    weekly_data[0]["error"],
+                    weekly_data[1]["error"],
+                    weekly_data[2]["error"],
+                    weekly_data[3]["error"],
+                    weekly_data[4]["error"],
+                    weekly_data[5]["error"],
+                    weekly_data[6]["error"]
+                ],
+                "total_data": [
+                    weekly_data[0]["total"],
+                    weekly_data[1]["total"],
+                    weekly_data[2]["total"],
+                    weekly_data[3]["total"],
+                    weekly_data[4]["total"],
+                    weekly_data[5]["total"],
+                    weekly_data[6]["total"]
+                ]
+            },
+            # 올해 월별 점검 횟수 통계 추가
+            "yearly_inspection_stats": {
+                "year": current_year,
+                "labels": ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"],
+                "data": [
+                    monthly_data[1],
+                    monthly_data[2],
+                    monthly_data[3],
+                    monthly_data[4],
+                    monthly_data[5],
+                    monthly_data[6],
+                    monthly_data[7],
+                    monthly_data[8],
+                    monthly_data[9],
+                    monthly_data[10],
+                    monthly_data[11],
+                    monthly_data[12]
+                ]
+            }
         }
         
         logger.info(f"대시보드 통계 조회 결과: {result}")
