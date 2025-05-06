@@ -68,6 +68,31 @@ app.include_router(profile_router)
 from admin.system.system_router import router as system_router
 app.include_router(system_router)
 
+# 스케줄러 API 라우터 등록
+from scheduler.api import router as scheduler_router
+app.include_router(scheduler_router)
+
+# 애플리케이션 시작 이벤트 핸들러
+@app.on_event("startup")
+async def startup_event():
+    # 스케줄러 초기화
+    from scheduler.scheduler import initialize_scheduler
+    scheduler = initialize_scheduler()
+    if scheduler:
+        logger.info("스케줄러가 성공적으로 초기화되었습니다.")
+    else:
+        logger.warning("스케줄러 초기화에 실패했습니다.")
+
+# 애플리케이션 종료 이벤트 핸들러
+@app.on_event("shutdown")
+async def shutdown_event():
+    # 스케줄러 종료
+    from scheduler.scheduler import get_scheduler
+    scheduler = get_scheduler()
+    if scheduler and scheduler.running:
+        scheduler.shutdown()
+        logger.info("스케줄러가 종료되었습니다.")
+
 if __name__ == "__main__":
     # 시작 시 데이터베이스 연결 확인
     db = get_db()
