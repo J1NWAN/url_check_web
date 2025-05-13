@@ -55,4 +55,7 @@ class CurrentUser(BaseModel):
     name: str
     email: Optional[EmailStr] = None
     role: Optional[str] = None
-    created_at: Optional[str] = None 
+    created_at: Optional[str] = None
+    phone: Optional[str] = None
+    bio: Optional[str] = None
+    profile_color: Optional[str] = None 

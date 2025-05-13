@@ -205,7 +205,10 @@ async def get_current_user(user_id: str) -> CurrentUser:
             name=user_data.get("name"),
             email=user_data.get("email"),
             role=role,
-            created_at=created_at_str
+            created_at=created_at_str,
+            phone=user_data.get("phone"),
+            bio=user_data.get("bio"),
+            profile_color=user_data.get("profile_color")
         )
         
     except HTTPException:
