@@ -83,7 +83,6 @@
                 if (password.length < 8) errors.push("비밀번호는 최소 8자 이상이어야 합니다.");
                 if (!/[a-z]/.test(password)) errors.push("비밀번호에는 최소 하나의 소문자가 필요합니다.");
                 if (!/[0-9]/.test(password)) errors.push("비밀번호에는 최소 하나의 숫자가 필요합니다.");
-                if (!/[^A-Za-z0-9]/.test(password)) errors.push("비밀번호에는 최소 하나의 특수문자가 필요합니다.");
                 return errors;
             }
             
