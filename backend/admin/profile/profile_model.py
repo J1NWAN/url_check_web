@@ -1,12 +1,14 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional
+from typing import Optional, List
 import re
 
 class ProfileUpdate(BaseModel):
+    """프로필 업데이트 요청 모델"""
     email: EmailStr = Field(..., description="사용자 이메일 주소")
     phone: Optional[str] = Field(None, description="사용자 휴대폰번호")
     bio: Optional[str] = Field(None, description="자기소개")
     new_password: Optional[str] = Field(None, min_length=8, max_length=20, description="새 비밀번호")
+    profile_color: Optional[str] = None
     
     @validator('phone')
     def validate_phone(cls, v):
@@ -24,9 +26,30 @@ class ProfileUpdate(BaseModel):
         return v
 
 class ProfileResponse(BaseModel):
+    """프로필 응답 모델"""
     id: str
     userid: str
     name: str
     email: EmailStr
     phone: Optional[str] = None
     bio: Optional[str] = None
+    profile_color: Optional[str] = None
+
+class AdminUserResponse(BaseModel):
+    """관리자 사용자 응답 모델"""
+    id: str
+    userid: str
+    name: str
+    email: str
+    phone: Optional[str] = None
+    bio: Optional[str] = None
+    profile_color: Optional[str] = None
+    role: Optional[str] = "user"
+
+class AdminListResponse(BaseModel):
+    """관리자 목록 응답 모델"""
+    admins: List[AdminUserResponse]
+
+class AdminDetailRequest(BaseModel):
+    """관리자 상세 정보 요청 모델"""
+    admin_id: str

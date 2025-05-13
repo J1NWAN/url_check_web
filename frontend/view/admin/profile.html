@@ -100,7 +100,7 @@
     <div class="row gx-4 mb-2">
       <div class="col-auto">
         <div class="avatar avatar-xl position-relative">
-          <div id="profile-color" class="border-radius-lg shadow-sm" style="width: 50px; height: 50px; background-color: #000000; display: flex; justify-content: center; align-items: center; color: white; font-size: 20px; border-radius: 50%;"></div>
+          <div id="profile-color" class="border-radius-lg shadow-sm" style="width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; color: white; font-size: 20px; border-radius: 50%;"></div>
         </div>
       </div>
       <div class="col-auto my-auto">
@@ -194,56 +194,14 @@
               <h6 class="mb-0">관리자 목록</h6>
             </div>
             <div class="card-body p-3">
-              <ul class="list-group">
-                <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2 pt-0">
-                  <div class="avatar me-3">
-                    <img src="../assets/img/kal-visuals-square.jpg" alt="kal" class="border-radius-lg shadow">
+              <ul class="list-group" id="admin-list">
+                <li class="list-group-item border-0 d-flex align-items-center px-0 py-3" id="admin-loading">
+                  <div class="d-flex align-items-center justify-content-center w-100">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="ms-2">관리자 목록을 불러오는 중...</span>
                   </div>
-                  <div class="d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="mb-0 text-sm">Sophie B.</h6>
-                    <p class="mb-0 text-xs">Hi! I need more information..</p>
-                  </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="1">Reply</a>
-                </li>
-                <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2">
-                  <div class="avatar me-3">
-                    <img src="../assets/img/marie.jpg" alt="kal" class="border-radius-lg shadow">
-                  </div>
-                  <div class="d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="mb-0 text-sm">Anne Marie</h6>
-                    <p class="mb-0 text-xs">Awesome work, can you..</p>
-                  </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="2">Reply</a>
-                </li>
-                <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2">
-                  <div class="avatar me-3">
-                    <img src="../assets/img/ivana-square.jpg" alt="kal" class="border-radius-lg shadow">
-                  </div>
-                  <div class="d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="mb-0 text-sm">Ivanna</h6>
-                    <p class="mb-0 text-xs">About files I can..</p>
-                  </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="3">Reply</a>
-                </li>
-                <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2">
-                  <div class="avatar me-3">
-                    <img src="../assets/img/team-4.jpg" alt="kal" class="border-radius-lg shadow">
-                  </div>
-                  <div class="d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="mb-0 text-sm">Peterson</h6>
-                    <p class="mb-0 text-xs">Have a great afternoon..</p>
-                  </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="4">Reply</a>
-                </li>
-                <li class="list-group-item border-0 d-flex align-items-center px-0">
-                  <div class="avatar me-3">
-                    <img src="../assets/img/team-3.jpg" alt="kal" class="border-radius-lg shadow">
-                  </div>
-                  <div class="d-flex align-items-start flex-column justify-content-center">
-                    <h6 class="mb-0 text-sm">Nick Daniel</h6>
-                    <p class="mb-0 text-xs">Hi! I need more information..</p>
-                  </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="5">Reply</a>
                 </li>
               </ul>
             </div>
@@ -415,6 +373,9 @@
       }
     });
     
+    // 관리자 목록 가져오기
+    fetchAdminList();
+    
     // 프로필 수정 버튼 클릭 이벤트
     document.getElementById('editProfileBtn').addEventListener('click', function() {
       // 모달 폼 초기화
@@ -524,6 +485,11 @@
         const userPhoneElements = document.getElementsByClassName('user-phone');
         for (let i = 0; i < userPhoneElements.length; i++) {
           userPhoneElements[i].textContent = userData.phone || '';
+        }
+        
+        const userBioElements = document.getElementsByClassName('user-bio');
+        for (let i = 0; i < userBioElements.length; i++) {
+          userBioElements[i].textContent = userData.bio || '자기소개';
         }
         
         // 사용자 권한에 따라 탭 메뉴 구성
@@ -671,9 +637,21 @@
       colorPreview.style.backgroundColor = '#000000';
       colorPreview.textContent = 'U';
       
-      // 여기서 실제로는 adminId로 API 호출하여 해당 관리자 정보를 가져와야 합니다
-      // 테스트를 위해 임시 데이터 설정
+      // 현재 수정 중인 관리자 ID를 저장
+      document.getElementById('editProfileModal').dataset.editingAdminId = adminId;
+      
+      // 관리자 ID가 'current'인 경우 현재 로그인한 사용자의 정보를 가져옴
+      if (adminId === 'current') {
+        fetchUserProfile(true);
+        const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+        modal.show();
+        return;
+      }
+      
+      // 특정 관리자 정보 가져오기
       fetchAdminProfile(adminId).then(adminData => {
+        console.log('프로필 수정 모달에 표시할 관리자 정보:', adminData);
+        
         // 모달에 정보 채우기
         document.getElementById('userid').value = adminData.userid || '';
         document.getElementById('name').value = adminData.name || '';
@@ -691,28 +669,47 @@
         colorPreview.style.backgroundColor = profileColor;
         colorPreview.textContent = nameInitial.toUpperCase();
         
-        // 현재 수정 중인 관리자 ID를 저장
-        document.getElementById('editProfileModal').dataset.editingAdminId = adminId;
-        
         // 모달 열기
         const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
         modal.show();
+      }).catch(error => {
+        console.error('관리자 정보 가져오기 오류:', error);
+        alert('관리자 정보를 가져오는 중 오류가 발생했습니다.');
       });
     }
     
     // 관리자 프로필 정보 가져오기 (실제로는 API 호출)
     async function fetchAdminProfile(adminId) {
-      // 실제로는 API 호출로 관리자 정보를 가져와야 함
-      // 테스트를 위해 임시 데이터 반환
-      return {
-        id: adminId,
-        userid: `admin${adminId}`,
-        name: `관리자 ${adminId}`,
-        email: `admin${adminId}@example.com`,
-        phone: `010-1234-${adminId.padStart(4, '0')}`,
-        bio: `관리자 ${adminId}의 자기소개입니다.`,
-        profile_color: `#${Math.floor(Math.random()*16777215).toString(16)}`
-      };
+      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+      
+      try {
+        const response = await fetch(`/api/admin/${adminId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`관리자 정보 가져오기 실패: ${response.status}`);
+        }
+        
+        const adminData = await response.json();
+        console.log('API에서 가져온 관리자 정보:', adminData);
+        return adminData;
+      } catch (error) {
+        console.error('관리자 정보 가져오기 오류:', error);
+        // 오류 발생 시 기본 데이터 반환
+        return {
+          id: adminId,
+          userid: `admin${adminId}`,
+          name: `관리자 ${adminId}`,
+          email: `admin${adminId}@example.com`,
+          phone: `010-1234-${adminId.padStart(4, '0')}`,
+          bio: `관리자 정보를 가져오는 중 오류가 발생했습니다.`,
+          profile_color: `#000000`
+        };
+      }
     }
     
     // 메일 전송 모달 표시
@@ -975,8 +972,6 @@
         
         // 데이터 형식 정의
         const standardData = {
-          userid: userid,
-          name: name,
           email: email,
           phone: phone || null,
           bio: bio || null,
@@ -985,7 +980,7 @@
         
         // 비밀번호가 입력된 경우만 포함
         if (newPassword) {
-          standardData.password = newPassword;
+          standardData.new_password = newPassword;
         }
         
         // API URL 정의
@@ -1082,6 +1077,92 @@
       } catch (e) {
         console.error('토큰 파싱 오류:', e);
         return null;
+      }
+    }
+
+    // 관리자 목록 가져오기
+    async function fetchAdminList() {
+      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+      const adminListContainer = document.getElementById('admin-list');
+      const loadingElement = document.getElementById('admin-loading');
+      
+      try {
+        const response = await fetch('/api/admin/list', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`관리자 목록 가져오기 실패: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('관리자 목록:', data);
+        
+        // 로딩 표시 제거
+        if (loadingElement) {
+          loadingElement.remove();
+        }
+        
+        // 관리자가 없는 경우
+        if (!data.admins || data.admins.length === 0) {
+          const emptyMessage = document.createElement('li');
+          emptyMessage.className = 'list-group-item border-0 d-flex align-items-center px-0 py-3';
+          emptyMessage.innerHTML = `
+            <div class="d-flex align-items-center justify-content-center w-100">
+              <span class="text-muted">등록된 관리자가 없습니다.</span>
+            </div>
+          `;
+          adminListContainer.appendChild(emptyMessage);
+          return;
+        }
+        
+        // 관리자 목록 렌더링
+        data.admins.forEach(admin => {
+          const adminItem = document.createElement('li');
+          adminItem.className = 'list-group-item border-0 d-flex align-items-center px-0 mb-2';
+          
+          // 프로필 색상 또는 이니셜 설정
+          const nameInitial = (admin.name && admin.name.charAt(0)) || 
+                             (admin.userid && admin.userid.charAt(0)) || 
+                             'A';
+          
+          adminItem.innerHTML = `
+            <div class="avatar me-3">
+              <div class="border-radius-lg shadow-sm" style="width: 40px; height: 40px; background-color: ${admin.profile_color || '#000000'}; display: flex; justify-content: center; align-items: center; color: white; font-size: 16px; border-radius: 50%;">
+                ${nameInitial.toUpperCase()}
+              </div>
+            </div>
+            <div class="d-flex align-items-start flex-column justify-content-center">
+              <h6 class="mb-0 text-sm">${admin.name || admin.userid}</h6>
+              <p class="mb-0 text-xs">${admin.bio || '자기소개가 없습니다.'}</p>
+            </div>
+            <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="${admin.id}">수정</a>
+          `;
+          
+          adminListContainer.appendChild(adminItem);
+        });
+        
+        // 현재 활성화된 탭에 따라 버튼 라벨 및 동작 설정
+        const activeTab = document.querySelector('#profile-tabs .nav-link.active');
+        if (activeTab) {
+          showTabContent(activeTab.dataset.tabId);
+        }
+        
+      } catch (error) {
+        console.error('관리자 목록 가져오기 오류:', error);
+        
+        // 로딩 표시 제거하고 오류 메시지 표시
+        if (loadingElement) {
+          loadingElement.innerHTML = `
+            <div class="d-flex align-items-center justify-content-center w-100 py-3">
+              <i class="fas fa-exclamation-circle text-danger me-2"></i>
+              <span>관리자 목록을 불러오는 중 오류가 발생했습니다.</span>
+            </div>
+          `;
+        }
       }
     }
 

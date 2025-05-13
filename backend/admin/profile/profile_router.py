@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 import logging
 from config.templates import templates
-from .profile_model import ProfileUpdate, ProfileResponse
-from .profile_service import update_profile
+from .profile_model import ProfileUpdate, ProfileResponse, AdminListResponse, AdminUserResponse
+from .profile_service import update_profile, get_admin_list, get_admin_detail
 from util.util import verify_token
 
 # 로거 설정
@@ -45,4 +45,72 @@ async def update_user_profile(profile_data: ProfileUpdate, user_id_and_payload =
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="프로필 업데이트 중 오류가 발생했습니다."
+        )
+
+# 관리자 목록 조회 API
+@router.get("/api/admin/list", response_model=AdminListResponse, tags=["프로필 API"])
+async def get_admin_users(user_id_and_payload = Depends(verify_token)):
+    """
+    시스템에 등록된 모든 관리자 목록을 조회하는 엔드포인트.
+    자기 자신을 제외한 관리자 목록을 반환합니다.
+    
+    JWT 토큰 인증이 필요합니다(Authorization 헤더에 Bearer 토큰 포함).
+    
+    성공 시 관리자 목록을 반환합니다.
+    """
+    try:
+        user_id, payload = user_id_and_payload
+        # 사용자 권한 확인 (선택 사항)
+        # role = payload.get("role", "user")
+        # if role not in ["admin", "super-admin"]:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_403_FORBIDDEN,
+        #         detail="관리자 목록을 조회할 권한이 없습니다."
+        #     )
+        
+        admin_list = await get_admin_list(user_id)
+        return admin_list
+    except HTTPException as e:
+        # HTTPException은 그대로 전파
+        raise e
+    except Exception as e:
+        logger.exception(f"관리자 목록 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="관리자 목록 조회 중 오류가 발생했습니다."
+        )
+
+# 특정 관리자 정보 조회 API
+@router.get("/api/admin/{admin_id}", response_model=AdminUserResponse, tags=["프로필 API"])
+async def get_admin_detail_by_id(admin_id: str, user_id_and_payload = Depends(verify_token)):
+    """
+    특정 관리자의 상세 정보를 조회하는 엔드포인트.
+    
+    Args:
+        admin_id: 조회할 관리자 ID
+    
+    JWT 토큰 인증이 필요합니다(Authorization 헤더에 Bearer 토큰 포함).
+    
+    성공 시 관리자 상세 정보를 반환합니다.
+    """
+    try:
+        user_id, payload = user_id_and_payload
+        # 사용자 권한 확인 (선택 사항)
+        # role = payload.get("role", "user")
+        # if role not in ["admin", "super-admin"]:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_403_FORBIDDEN,
+        #         detail="관리자 정보를 조회할 권한이 없습니다."
+        #     )
+        
+        admin_detail = await get_admin_detail(admin_id)
+        return admin_detail
+    except HTTPException as e:
+        # HTTPException은 그대로 전파
+        raise e
+    except Exception as e:
+        logger.exception(f"관리자 정보 조회 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="관리자 정보 조회 중 오류가 발생했습니다."
         )
