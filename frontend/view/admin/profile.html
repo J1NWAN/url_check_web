@@ -25,6 +25,69 @@
     border-color: #7928CA !important;
     box-shadow: 0 0 0 2px rgba(121, 40, 202, 0.25);
   }
+  
+  /* 탭 버튼 스타일 강화 */
+  .nav-pills .nav-link {
+    transition: all 0.3s ease;
+    border-radius: 0.5rem;
+  }
+  
+  .nav-pills .nav-link:hover {
+    background-color: rgba(233, 236, 239, 0.5);
+  }
+  
+  .nav-pills .nav-link.active {
+    background-color: #44443b !important;
+    color: white !important;
+    box-shadow: 0 3px 5px 0 rgba(58, 57, 59, 0.3);
+    transform: translateY(-2px);
+  }
+  
+  .nav-pills .nav-link.active i,
+  .nav-pills .nav-link.active span {
+    color: white !important;
+  }
+  
+  /* 탭 컨텐츠 스타일 */
+  .tab-pane {
+    display: none;
+  }
+  
+  .tab-pane.active {
+    display: block;
+    animation: fadeIn 0.5s;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  /* 비활성화된 버튼 스타일 */
+  .btn.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  /* 프로필 관리 페이지 스타일 */
+  #profile-tabs .nav-link {
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  /* 탭 active 상태 강화 */
+  #profile-tabs .nav-link.active {
+    background-color: #e91e63;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 20px 0 rgba(0,0,0,0.14), 0 7px 10px -5px rgba(233,30,99,0.4);
+  }
+  
+  /* 탭 호버 효과 */
+  #profile-tabs .nav-link:hover:not(.active) {
+    background-color: rgba(233,30,99,0.1);
+  }
 </style>
 {% endblock %}
 
@@ -37,14 +100,12 @@
     <div class="row gx-4 mb-2">
       <div class="col-auto">
         <div class="avatar avatar-xl position-relative">
-          <img src="../assets/img/bruce-mars.jpg" alt="profile_image" class="w-100 border-radius-lg shadow-sm">
+          <div id="profile-color" class="border-radius-lg shadow-sm" style="width: 50px; height: 50px; background-color: #000000; display: flex; justify-content: center; align-items: center; color: white; font-size: 20px; border-radius: 50%;"></div>
         </div>
       </div>
       <div class="col-auto my-auto">
         <div class="h-100">
-          <h5 class="mb-1 user-name">
-            Richard Davis
-          </h5>
+          <h5 class="mb-1 user-name"></h5>
           <p class="mb-0 font-weight-normal text-sm">
             CEO / Co-Founder
           </p>
@@ -130,7 +191,7 @@
         <div class="col-12 col-xl-4">
           <div class="card card-plain h-100">
             <div class="card-header pb-0 p-3">
-              <h6 class="mb-0">Conversations</h6>
+              <h6 class="mb-0">관리자 목록</h6>
             </div>
             <div class="card-body p-3">
               <ul class="list-group">
@@ -142,7 +203,7 @@
                     <h6 class="mb-0 text-sm">Sophie B.</h6>
                     <p class="mb-0 text-xs">Hi! I need more information..</p>
                   </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto" href="javascript:;">Reply</a>
+                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="1">Reply</a>
                 </li>
                 <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2">
                   <div class="avatar me-3">
@@ -152,7 +213,7 @@
                     <h6 class="mb-0 text-sm">Anne Marie</h6>
                     <p class="mb-0 text-xs">Awesome work, can you..</p>
                   </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto" href="javascript:;">Reply</a>
+                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="2">Reply</a>
                 </li>
                 <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2">
                   <div class="avatar me-3">
@@ -162,7 +223,7 @@
                     <h6 class="mb-0 text-sm">Ivanna</h6>
                     <p class="mb-0 text-xs">About files I can..</p>
                   </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto" href="javascript:;">Reply</a>
+                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="3">Reply</a>
                 </li>
                 <li class="list-group-item border-0 d-flex align-items-center px-0 mb-2">
                   <div class="avatar me-3">
@@ -172,7 +233,7 @@
                     <h6 class="mb-0 text-sm">Peterson</h6>
                     <p class="mb-0 text-xs">Have a great afternoon..</p>
                   </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto" href="javascript:;">Reply</a>
+                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="4">Reply</a>
                 </li>
                 <li class="list-group-item border-0 d-flex align-items-center px-0">
                   <div class="avatar me-3">
@@ -182,7 +243,7 @@
                     <h6 class="mb-0 text-sm">Nick Daniel</h6>
                     <p class="mb-0 text-xs">Hi! I need more information..</p>
                   </div>
-                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto" href="javascript:;">Reply</a>
+                  <a class="btn btn-link pe-3 ps-0 mb-0 ms-auto w-25 w-md-auto admin-action-btn" href="javascript:;" data-admin-id="5">Reply</a>
                 </li>
               </ul>
             </div>
@@ -213,8 +274,8 @@
           </div>
           <div class="mb-3">
             <label for="newPassword" class="form-label">새 비밀번호</label>
-            <input type="password" class="form-control" id="newPassword" placeholder="새 비밀번호를 입력하세요" required>
-            <div class="form-text">영어, 숫자, 특수문자 조합, 8~20자</div>
+            <input type="password" class="form-control" id="newPassword" placeholder="새 비밀번호를 입력하세요">
+            <div class="form-text">영어, 숫자, 특수문자 조합, 8~20자 (비워두면 변경하지 않음)</div>
           </div>
           <div class="mb-3">
             <label for="phone" class="form-label">휴대폰번호</label>
@@ -228,12 +289,95 @@
             <label for="bio" class="form-label">소개</label>
             <textarea class="form-control" id="bio" rows="3" placeholder="자기소개를 입력하세요"></textarea>
           </div>
+          <div class="mb-3">
+            <label for="profileColor" class="form-label">프로필 색상</label>
+            <div class="d-flex align-items-center">
+              <input type="color" class="form-control form-control-color me-3" id="profileColor" value="#000000" title="프로필 색상을 선택하세요">
+              <div id="profileColorPreview" class="border-radius-lg shadow-sm" style="width: 50px; height: 50px; background-color: #000000; display: flex; justify-content: center; align-items: center; color: white; font-size: 20px; border-radius: 50%;"></div>
+            </div>
+          </div>
           <div class="alert alert-danger" id="profileEditError" style="display: none;"></div>
         </form>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
         <button type="button" class="btn btn-primary" id="saveProfileBtn">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 메일 전송 모달 -->
+<div class="modal fade" id="sendMailModal" tabindex="-1" aria-labelledby="sendMailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sendMailModalLabel">메일 전송</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="mailForm">
+          <input type="hidden" id="mailRecipientId">
+          <div class="mb-3">
+            <label for="mailSubject" class="form-label">제목</label>
+            <input type="text" class="form-control" id="mailSubject">
+          </div>
+          <div class="mb-3">
+            <label for="mailContent" class="form-label">내용</label>
+            <textarea class="form-control" id="mailContent" rows="5"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" id="sendMailBtn">전송</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 알림 설정 모달 -->
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="settingsModalLabel">알림 설정</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="settingsForm">
+          <input type="hidden" id="settingsAdminId">
+          <h6 class="text-uppercase text-body text-xs font-weight-bolder">이메일 알림</h6>
+          <div class="mb-3">
+            <div class="form-check form-switch ps-0">
+              <input class="form-check-input ms-auto" type="checkbox" id="adminEmailAlert1" checked>
+              <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="adminEmailAlert1">시스템 오류 발생 시 이메일 수신</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check form-switch ps-0">
+              <input class="form-check-input ms-auto" type="checkbox" id="adminEmailAlert2">
+              <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="adminEmailAlert2">금일 일일점검 미완료 시 이메일 수신</label>
+            </div>
+          </div>
+          <h6 class="text-uppercase text-body text-xs font-weight-bolder mt-4">모바일 알림</h6>
+          <div class="mb-3">
+            <div class="form-check form-switch ps-0">
+              <input class="form-check-input ms-auto" type="checkbox" id="adminMobileAlert1" checked>
+              <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="adminMobileAlert1">시스템 오류 발생 시 모바일 알림 수신</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check form-switch ps-0">
+              <input class="form-check-input ms-auto" type="checkbox" id="adminMobileAlert2">
+              <label class="form-check-label text-body ms-3 text-truncate w-80 mb-0" for="adminMobileAlert2">금일 일일점검 미완료 시 모바일 알림 수신</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" id="saveSettingsBtn">저장</button>
       </div>
     </div>
   </div>
@@ -251,6 +395,9 @@
       profileLink.classList.remove('text-dark');
     }
     
+    // 프로필 수정 모달 초기화
+    initProfileEditModal();
+    
     // 저장된 토큰 가져오기
     const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     
@@ -260,10 +407,38 @@
     }
     
     // 사용자 정보 가져오기
-    fetchUserProfile();
+    fetchUserProfile().then(() => {
+      // 현재 사용자 권한과 활성화된 탭에 맞게 버튼 상태 초기화
+      const activeTab = document.querySelector('#profile-tabs .nav-link.active');
+      if (activeTab) {
+        showTabContent(activeTab.dataset.tabId);
+      }
+    });
     
     // 프로필 수정 버튼 클릭 이벤트
     document.getElementById('editProfileBtn').addEventListener('click', function() {
+      // 모달 폼 초기화
+      document.getElementById('userid').value = '';
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('phone').value = '';
+      document.getElementById('bio').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('profileColor').value = '#000000';
+      document.getElementById('profileEditError').style.display = 'none';
+      document.getElementById('profileEditError').textContent = '';
+      
+      // 색상 미리보기 초기화
+      const colorPreview = document.getElementById('profileColorPreview');
+      colorPreview.style.backgroundColor = '#000000';
+      colorPreview.textContent = 'U';
+      
+      // 현재 로그인한 사용자의 프로필 편집
+      document.getElementById('editProfileModal').dataset.editingAdminId = 'current';
+      
+      // 현재 로그인한 사용자의 정보를 API에서 가져와 폼에 채움
+      fetchUserProfile(true);
+      
       const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
       modal.show();
     });
@@ -272,7 +447,7 @@
     document.getElementById('saveProfileBtn').addEventListener('click', updateProfile);
     
     // 사용자 프로필 정보 가져오기
-    async function fetchUserProfile() {
+    async function fetchUserProfile(forEdit = false) {
       try {
         // API 호출로 사용자 정보 가져오기
         const response = await fetch('/api/auth/me', {
@@ -288,12 +463,47 @@
         const userData = await response.json();
         console.log('API에서 가져온 사용자 정보:', userData);
         
+        // 사용자 권한 저장
+        localStorage.setItem('user_role', userData.role || 'user');
+        
+        if (forEdit) {
+          // 프로필 수정 모달에 정보 채우기
+          document.getElementById('userid').value = userData.userid || '';
+          document.getElementById('name').value = userData.name || '';
+          document.getElementById('email').value = userData.email || '';
+          document.getElementById('phone').value = userData.phone || '';
+          document.getElementById('bio').value = userData.bio || '';
+          
+          const profileColor = userData.profile_color || '#000000';
+          document.getElementById('profileColor').value = profileColor;
+          
+          // 색상 미리보기 업데이트
+          const colorPreview = document.getElementById('profileColorPreview');
+          const nameInitial = (userData.name && userData.name.charAt(0)) || 
+                              (userData.userid && userData.userid.charAt(0)) || 
+                              'U';
+          colorPreview.style.backgroundColor = profileColor;
+          colorPreview.textContent = nameInitial.toUpperCase();
+          
+          return;
+        }
+        
         // 화면에 사용자 정보 표시
         document.getElementById('userid').value = userData.userid || '';
         document.getElementById('name').value = userData.name || '';
         document.getElementById('email').value = userData.email || '';
         document.getElementById('phone').value = userData.phone || '';
         document.getElementById('bio').value = userData.bio || '';
+
+        // 프로필 색상 설정 (색상이 없는 경우 기본값 #000000 검은색 사용)
+        const profileColor = document.getElementById('profile-color');
+        profileColor.style.backgroundColor = userData.profile_color || '#000000';
+        
+        // 이름 첫 글자 또는 아이디 첫 글자를 프로필 색상 영역에 표시
+        const nameInitial = (userData.name && userData.name.charAt(0)) || 
+                           (userData.userid && userData.userid.charAt(0)) || 
+                           'U';
+        profileColor.textContent = nameInitial.toUpperCase();
 
         // getElementsByClassName은 컬렉션을 반환하므로 각 요소에 접근해야 합니다
         const userIdElements = document.getElementsByClassName('user-id');
@@ -340,19 +550,272 @@
               userIdElements[i].textContent = tokenPayload.userid || '';
             }
             
+            // 토큰에서 가져온 정보로 프로필 색상 및 이니셜 설정
+            const profileColor = document.getElementById('profile-color');
+            profileColor.style.backgroundColor = tokenPayload.profile_color || '#000000';
+            
+            const nameInitial = (tokenPayload.name && tokenPayload.name.charAt(0)) || 
+                               (tokenPayload.userid && tokenPayload.userid.charAt(0)) || 
+                               'U';
+            profileColor.textContent = nameInitial.toUpperCase();
+            
+            // 토큰에서 가져온 권한 저장
+            localStorage.setItem('user_role', tokenPayload.role || 'user');
+            
             // 토큰에서 가져온 권한으로 탭 메뉴 구성
             renderProfileTabs(tokenPayload.role || 'user');
           } else {
             // 기본 권한으로 탭 메뉴 구성
+            localStorage.setItem('user_role', 'user');
             renderProfileTabs('user');
           }
         } catch (e) {
           console.error('토큰 파싱 오류:', e);
           // 기본 권한으로 탭 메뉴 구성
+          localStorage.setItem('user_role', 'user');
           renderProfileTabs('user');
         }
       }
     }
+    
+    // 탭 전환 기능
+    function showTabContent(tabId) {
+      // 모든 탭 컨텐츠 숨기기
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+        pane.classList.remove('show');
+      });
+      
+      // 선택한 탭 컨텐츠 표시
+      const selectedPane = document.getElementById(`${tabId}-content`);
+      if (selectedPane) {
+        selectedPane.classList.add('active');
+        selectedPane.classList.add('show');
+      }
+      
+      // 사용자 권한 확인
+      const userRole = getCurrentUserRole();
+      
+      // 관리자 목록의 버튼 라벨 변경
+      const adminActionBtns = document.querySelectorAll('.admin-action-btn');
+      
+      switch(tabId) {
+        case 'user-tab':
+          // super-admin 권한만 수정 가능
+          if (userRole === 'super-admin') {
+            adminActionBtns.forEach(btn => {
+              btn.textContent = '수정';
+              btn.onclick = function() {
+                showProfileEditModal(this.dataset.adminId);
+              };
+              btn.classList.remove('disabled');
+            });
+          } else {
+            // 다른 권한은 버튼 비활성화
+            adminActionBtns.forEach(btn => {
+              btn.textContent = '수정';
+              btn.onclick = null;
+              btn.classList.add('disabled');
+            });
+          }
+          break;
+        case 'email-tab':
+          // 모든 권한 메일 전송 가능
+          adminActionBtns.forEach(btn => {
+            btn.textContent = '전송';
+            btn.onclick = function() {
+              showSendMailModal(this.dataset.adminId);
+            };
+            btn.classList.remove('disabled');
+          });
+          break;
+        case 'settings-tab':
+          // super-admin 권한만 설정 가능
+          if (userRole === 'super-admin') {
+            adminActionBtns.forEach(btn => {
+              btn.textContent = '설정';
+              btn.onclick = function() {
+                showSettingsModal(this.dataset.adminId);
+              };
+              btn.classList.remove('disabled');
+            });
+          } else {
+            // 다른 권한은 버튼 비활성화
+            adminActionBtns.forEach(btn => {
+              btn.textContent = '설정';
+              btn.onclick = null;
+              btn.classList.add('disabled');
+            });
+          }
+          break;
+      }
+    }
+    
+    // 프로필 수정 모달 표시 (관리자 ID를 파라미터로 받음)
+    function showProfileEditModal(adminId) {
+      console.log(`관리자 ID ${adminId}의 프로필 수정 모달 열기`);
+      
+      // 모달 폼 초기화
+      document.getElementById('userid').value = '';
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('phone').value = '';
+      document.getElementById('bio').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('profileColor').value = '#000000';
+      document.getElementById('profileEditError').style.display = 'none';
+      document.getElementById('profileEditError').textContent = '';
+      
+      // 색상 미리보기 초기화
+      const colorPreview = document.getElementById('profileColorPreview');
+      colorPreview.style.backgroundColor = '#000000';
+      colorPreview.textContent = 'U';
+      
+      // 여기서 실제로는 adminId로 API 호출하여 해당 관리자 정보를 가져와야 합니다
+      // 테스트를 위해 임시 데이터 설정
+      fetchAdminProfile(adminId).then(adminData => {
+        // 모달에 정보 채우기
+        document.getElementById('userid').value = adminData.userid || '';
+        document.getElementById('name').value = adminData.name || '';
+        document.getElementById('email').value = adminData.email || '';
+        document.getElementById('phone').value = adminData.phone || '';
+        document.getElementById('bio').value = adminData.bio || '';
+        
+        const profileColor = adminData.profile_color || '#000000';
+        document.getElementById('profileColor').value = profileColor;
+        
+        // 색상 미리보기 업데이트
+        const nameInitial = (adminData.name && adminData.name.charAt(0)) || 
+                            (adminData.userid && adminData.userid.charAt(0)) || 
+                            'U';
+        colorPreview.style.backgroundColor = profileColor;
+        colorPreview.textContent = nameInitial.toUpperCase();
+        
+        // 현재 수정 중인 관리자 ID를 저장
+        document.getElementById('editProfileModal').dataset.editingAdminId = adminId;
+        
+        // 모달 열기
+        const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+        modal.show();
+      });
+    }
+    
+    // 관리자 프로필 정보 가져오기 (실제로는 API 호출)
+    async function fetchAdminProfile(adminId) {
+      // 실제로는 API 호출로 관리자 정보를 가져와야 함
+      // 테스트를 위해 임시 데이터 반환
+      return {
+        id: adminId,
+        userid: `admin${adminId}`,
+        name: `관리자 ${adminId}`,
+        email: `admin${adminId}@example.com`,
+        phone: `010-1234-${adminId.padStart(4, '0')}`,
+        bio: `관리자 ${adminId}의 자기소개입니다.`,
+        profile_color: `#${Math.floor(Math.random()*16777215).toString(16)}`
+      };
+    }
+    
+    // 메일 전송 모달 표시
+    function showSendMailModal(adminId) {
+      console.log(`관리자 ID ${adminId}에게 메일 전송 모달 열기`);
+      
+      // 모달 폼 초기화
+      document.getElementById('mailRecipientId').value = '';
+      document.getElementById('mailSubject').value = '';
+      document.getElementById('mailContent').value = '';
+      
+      // 수신자 ID 설정
+      document.getElementById('mailRecipientId').value = adminId;
+      
+      // 모달 열기
+      const modal = new bootstrap.Modal(document.getElementById('sendMailModal'));
+      modal.show();
+    }
+    
+    // 설정 모달 표시
+    function showSettingsModal(adminId) {
+      console.log(`관리자 ID ${adminId}의 알림 설정 모달 열기`);
+      
+      // 모달 폼 초기화
+      document.getElementById('settingsAdminId').value = '';
+      document.getElementById('adminEmailAlert1').checked = false;
+      document.getElementById('adminEmailAlert2').checked = false;
+      document.getElementById('adminMobileAlert1').checked = false;
+      document.getElementById('adminMobileAlert2').checked = false;
+      
+      // 관리자 ID 설정
+      document.getElementById('settingsAdminId').value = adminId;
+      
+      // 실제로는 여기서 API를 호출하여 해당 관리자의 현재 설정을 가져와야 함
+      // 임시 데이터로 설정값 초기화
+      fetchAdminSettings(adminId).then(settings => {
+        document.getElementById('adminEmailAlert1').checked = settings.emailAlert1;
+        document.getElementById('adminEmailAlert2').checked = settings.emailAlert2;
+        document.getElementById('adminMobileAlert1').checked = settings.mobileAlert1;
+        document.getElementById('adminMobileAlert2').checked = settings.mobileAlert2;
+        
+        // 모달 열기
+        const modal = new bootstrap.Modal(document.getElementById('settingsModal'));
+        modal.show();
+      });
+    }
+    
+    // 관리자 설정 정보 가져오기 (실제로는 API 호출)
+    async function fetchAdminSettings(adminId) {
+      // 실제로는 API 호출로 관리자 설정 정보를 가져와야 함
+      // 테스트를 위해 임시 데이터 반환
+      return {
+        emailAlert1: Math.random() > 0.5,
+        emailAlert2: Math.random() > 0.5,
+        mobileAlert1: Math.random() > 0.5,
+        mobileAlert2: Math.random() > 0.5
+      };
+    }
+    
+    // 메일 전송 버튼 이벤트
+    document.getElementById('sendMailBtn').addEventListener('click', function() {
+      const recipientId = document.getElementById('mailRecipientId').value;
+      const subject = document.getElementById('mailSubject').value;
+      const content = document.getElementById('mailContent').value;
+      
+      // 유효성 검사
+      if (!subject.trim()) {
+        alert('제목을 입력해주세요.');
+        return;
+      }
+      
+      if (!content.trim()) {
+        alert('내용을 입력해주세요.');
+        return;
+      }
+      
+      console.log('메일 전송:', { recipientId, subject, content });
+      
+      // 여기서 실제로는 API 호출로 메일 전송을 수행해야 합니다
+      alert('메일이 전송되었습니다.');
+      
+      // 모달 닫기
+      const modal = bootstrap.Modal.getInstance(document.getElementById('sendMailModal'));
+      modal.hide();
+    });
+    
+    // 설정 저장 버튼 이벤트
+    document.getElementById('saveSettingsBtn').addEventListener('click', function() {
+      const adminId = document.getElementById('settingsAdminId').value;
+      const emailAlert1 = document.getElementById('adminEmailAlert1').checked;
+      const emailAlert2 = document.getElementById('adminEmailAlert2').checked;
+      const mobileAlert1 = document.getElementById('adminMobileAlert1').checked;
+      const mobileAlert2 = document.getElementById('adminMobileAlert2').checked;
+      
+      console.log('알림 설정 저장:', { adminId, emailAlert1, emailAlert2, mobileAlert1, mobileAlert2 });
+      
+      // 여기서 실제로는 API 호출로 설정 저장을 수행해야 합니다
+      alert('알림 설정이 변경되었습니다.');
+      
+      // 모달 닫기
+      const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+      modal.hide();
+    });
     
     // 사용자 권한에 따라 탭 메뉴 구성
     function renderProfileTabs(userRole) {
@@ -380,12 +843,15 @@
         active: userRole !== 'super-admin' // super-admin이 아닌 경우 메일 탭이 기본 활성화
       });
       
-      tabs.push({
-        id: 'settings-tab',
-        icon: 'settings',
-        text: '설정',
-        active: false
-      });
+      // super-admin 권한을 가진 사용자만 설정 탭을 볼 수 있음
+      if (userRole === 'super-admin') {
+        tabs.push({
+          id: 'settings-tab',
+          icon: 'settings',
+          text: '설정',
+          active: false
+        });
+      }
       
       // 탭 생성
       tabs.forEach(tab => {
@@ -399,15 +865,44 @@
         a.role = 'tab';
         a.setAttribute('aria-selected', tab.active ? 'true' : 'false');
         a.id = tab.id;
+        a.dataset.tabId = tab.id; // 탭 식별을 위한 데이터 속성 추가
         
         a.innerHTML = `
           <i class="material-symbols-rounded text-lg position-relative">${tab.icon}</i>
           <span class="ms-1">${tab.text}</span>
         `;
         
+        // 탭 클릭 이벤트 추가
+        a.addEventListener('click', function() {
+          // 모든 탭에서 active 클래스 제거
+          document.querySelectorAll('#profile-tabs .nav-link').forEach(tabLink => {
+            tabLink.classList.remove('active');
+            tabLink.setAttribute('aria-selected', 'false');
+          });
+          
+          // 클릭한 탭에 active 클래스 추가
+          this.classList.add('active');
+          this.setAttribute('aria-selected', 'true');
+          
+          // 탭 컨텐츠 전환
+          showTabContent(this.dataset.tabId);
+        });
+        
         li.appendChild(a);
         tabsContainer.appendChild(li);
+        
+        // 활성화된 탭이면 해당 컨텐츠 표시
+        if (tab.active) {
+          showTabContent(tab.id);
+        }
       });
+    }
+    
+    // 현재 사용자의 권한 가져오기
+    function getCurrentUserRole() {
+      // 여기서는 API 응답이나 토큰에서 파싱된 권한을 반환해야 합니다
+      // 테스트를 위해 임시로 반환
+      return localStorage.getItem('user_role') || 'user'; // 기본값은 일반 사용자
     }
     
     // 프로필 업데이트
@@ -416,10 +911,24 @@
       const profileEditError = document.getElementById('profileEditError');
       
       // 폼 데이터 가져오기
+      const userid = document.getElementById('userid').value.trim();
+      const name = document.getElementById('name').value.trim();
       const newPassword = document.getElementById('newPassword').value.trim();
       const email = document.getElementById('email').value.trim();
       const phone = document.getElementById('phone').value.trim();
       const bio = document.getElementById('bio').value.trim();
+      const profileColor = document.getElementById('profileColor').value.trim();
+      
+      // 디버깅 정보
+      console.log('폼 데이터:', {
+        userid,
+        name,
+        password: newPassword ? '입력됨' : '입력안됨',
+        email,
+        phone,
+        bio,
+        profileColor
+      });
       
       // 필수 입력값 검증
       if (!email) {
@@ -460,44 +969,100 @@
         saveProfileBtn.disabled = true;
         profileEditError.style.display = 'none';
         
-        // 업데이트할 데이터 준비
-        const updateData = {
+        // 현재 수정 중인 사용자 ID 확인
+        const editingAdminId = document.getElementById('editProfileModal').dataset.editingAdminId || 'current';
+        console.log('수정 중인 관리자 ID:', editingAdminId);
+        
+        // 데이터 형식 정의
+        const standardData = {
+          userid: userid,
+          name: name,
           email: email,
-          phone: phone,
-          bio: bio
+          phone: phone || null,
+          bio: bio || null,
+          profile_color: profileColor
         };
         
         // 비밀번호가 입력된 경우만 포함
         if (newPassword) {
-          updateData.new_password = newPassword;
+          standardData.password = newPassword;
         }
         
-        // API 호출로 프로필 업데이트
-        const response = await fetch('/api/profile/update', {
-          method: 'PUT',
-          headers: { 
+        // API URL 정의
+        const apiUrl = (editingAdminId !== 'current') 
+          ? `/api/admin/users/${editingAdminId}/update`
+          : '/api/profile/update';
+        
+        // HTTP 메서드 (백엔드 API 요구에 맞게 설정)
+        let httpMethod = 'PUT';
+        
+        console.log(`프로필 업데이트 요청: ${apiUrl} (${httpMethod})`, standardData);
+        
+        // 서버 요청 전송
+        let response = await fetch(apiUrl, {
+          method: httpMethod,
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
+            'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify(updateData)
+          body: JSON.stringify(standardData)
         });
         
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || '프로필 업데이트 중 오류가 발생했습니다.');
+        // 405 Method Not Allowed 오류 발생 시 POST 메서드로 재시도
+        if (response.status === 405) {
+          console.log('PUT 메서드가 허용되지 않아 POST 메서드로 재시도합니다.');
+          httpMethod = 'POST';
+          
+          response = await fetch(apiUrl, {
+            method: httpMethod,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(standardData)
+          });
         }
         
-        // 성공 시 처리
-        alert('프로필이 업데이트되었습니다.');
-        
-        // 모달 닫기
-        const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
-        modal.hide();
-        
-        // 업데이트된 정보 다시 불러오기
-        fetchUserProfile();
+        if (response.ok) {
+          console.log('프로필 업데이트 성공');
+          
+          // 모달 닫기
+          const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+          modal.hide();
+          
+          // 프로필 정보 갱신
+          fetchUserProfile();
+          
+          // 성공 메시지 표시
+          alert('프로필이 성공적으로 업데이트되었습니다.');
+        } else {
+          // 오류 처리
+          console.error('프로필 업데이트 실패:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('오류 응답:', errorText);
+          
+          try {
+            // JSON 형식으로 오류 메시지가 왔는지 확인
+            const errorJson = JSON.parse(errorText);
+            profileEditError.textContent = errorJson.message || '프로필 업데이트에 실패했습니다.';
+          } catch(e) {
+            // JSON이 아닌 경우 오류 코드에 따라 메시지 설정
+            if (response.status === 422) {
+              profileEditError.textContent = '입력한 데이터가 유효하지 않습니다. 형식을 확인해주세요.';
+            } else if (response.status === 401) {
+              profileEditError.textContent = '인증이 필요합니다. 다시 로그인해주세요.';
+            } else if (response.status === 403) {
+              profileEditError.textContent = '접근 권한이 없습니다.';
+            } else {
+              profileEditError.textContent = `프로필 업데이트에 실패했습니다. (${response.status})`;
+            }
+          }
+          
+          profileEditError.style.display = 'block';
+        }
       } catch (error) {
-        profileEditError.textContent = error.message || '프로필 업데이트 중 오류가 발생했습니다.';
+        console.error('프로필 업데이트 오류:', error);
+        profileEditError.textContent = '네트워크 오류가 발생했습니다. 나중에 다시 시도해주세요.';
         profileEditError.style.display = 'block';
       } finally {
         saveProfileBtn.disabled = false;
@@ -518,6 +1083,27 @@
         console.error('토큰 파싱 오류:', e);
         return null;
       }
+    }
+
+    // 프로필 수정 모달 관련 초기화 및 이벤트 리스너
+    function initProfileEditModal() {
+      // 색상 선택 입력 필드의 변경 이벤트 등록
+      const profileColorInput = document.getElementById('profileColor');
+      const colorPreview = document.getElementById('profileColorPreview');
+      
+      profileColorInput.addEventListener('input', function() {
+        // 색상 변경 시 미리보기 업데이트
+        const selectedColor = this.value;
+        colorPreview.style.backgroundColor = selectedColor;
+        
+        // 이름 또는 아이디에서 첫 글자 가져오기
+        const name = document.getElementById('name').value.trim();
+        const userid = document.getElementById('userid').value.trim();
+        const nameInitial = (name && name.charAt(0)) || 
+                            (userid && userid.charAt(0)) || 
+                            'U';
+        colorPreview.textContent = nameInitial.toUpperCase();
+      });
     }
   });
 </script>
