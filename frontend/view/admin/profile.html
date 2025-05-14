@@ -247,6 +247,15 @@
             <label for="bio" class="form-label">소개</label>
             <textarea class="form-control" id="bio" rows="3" placeholder="자기소개를 입력하세요"></textarea>
           </div>
+          <div class="mb-3" id="roleSelectContainer" style="display: none;">
+            <label for="userRole" class="form-label">권한</label>
+            <select class="form-control" id="userRole">
+              <option value="">권한 없음</option>
+              <option value="user">일반 사용자</option>
+              <option value="admin">관리자</option>
+              <option value="super-admin">슈퍼 관리자</option>
+            </select>
+          </div>
           <div class="mb-3">
             <label for="profileColor" class="form-label">프로필 색상</label>
             <div class="d-flex align-items-center">
@@ -396,6 +405,9 @@
       
       // 현재 로그인한 사용자의 프로필 편집
       document.getElementById('editProfileModal').dataset.editingAdminId = 'current';
+      
+      // 권한 선택 필드 숨기기 (자기 자신의 프로필 수정 시에는 권한 변경 불가)
+      document.getElementById('roleSelectContainer').style.display = 'none';
       
       // 현재 로그인한 사용자의 정보를 API에서 가져와 폼에 채움
       fetchUserProfile(true);
@@ -640,8 +652,25 @@
       // 현재 수정 중인 관리자 ID를 저장
       document.getElementById('editProfileModal').dataset.editingAdminId = adminId;
       
+      // 현재 사용자의 권한 확인
+      const currentUserRole = getCurrentUserRole();
+      console.log('현재 사용자 권한:', currentUserRole);
+      
+      // 권한 선택 필드 표시 여부 결정
+      const roleSelectContainer = document.getElementById('roleSelectContainer');
+      
+      // 현재 사용자가 super-admin이고, 다른 관리자를 수정하는 경우에만 권한 선택 필드 표시
+      if (currentUserRole === 'super-admin' && adminId !== 'current') {
+        roleSelectContainer.style.display = 'block';
+      } else {
+        roleSelectContainer.style.display = 'none';
+      }
+      
       // 관리자 ID가 'current'인 경우 현재 로그인한 사용자의 정보를 가져옴
       if (adminId === 'current') {
+        // 자기 자신의 프로필을 수정할 때는 항상 권한 선택 필드를 숨김
+        roleSelectContainer.style.display = 'none';
+        
         fetchUserProfile(true);
         const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
         modal.show();
@@ -658,6 +687,13 @@
         document.getElementById('email').value = adminData.email || '';
         document.getElementById('phone').value = adminData.phone || '';
         document.getElementById('bio').value = adminData.bio || '';
+        
+        // 권한 정보 설정
+        if (document.getElementById('userRole')) {
+          // 권한이 null이거나 빈 문자열인 경우 권한 없음 옵션 선택
+          const userRole = adminData.role || '';
+          document.getElementById('userRole').value = userRole;
+        }
         
         const profileColor = adminData.profile_color || '#000000';
         document.getElementById('profileColor').value = profileColor;
@@ -897,9 +933,36 @@
     
     // 현재 사용자의 권한 가져오기
     function getCurrentUserRole() {
-      // 여기서는 API 응답이나 토큰에서 파싱된 권한을 반환해야 합니다
-      // 테스트를 위해 임시로 반환
-      return localStorage.getItem('user_role') || 'user'; // 기본값은 일반 사용자
+      // 저장된 토큰 가져오기
+      const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+      
+      // 로컬 스토리지에 저장된 권한 확인
+      const storedRole = localStorage.getItem('user_role');
+      
+      // 토큰에서 권한 파싱
+      try {
+        const tokenPayload = parseJwt(token);
+        console.log('토큰 페이로드:', tokenPayload);
+        
+        if (tokenPayload && tokenPayload.role) {
+          console.log('토큰에서 파싱한 권한:', tokenPayload.role);
+          // 토큰에서 파싱한 권한을 로컬 스토리지에 저장
+          localStorage.setItem('user_role', tokenPayload.role);
+          return tokenPayload.role;
+        }
+      } catch (e) {
+        console.error('토큰 파싱 오류:', e);
+      }
+      
+      // 토큰에서 파싱 실패 시 저장된 권한 반환
+      if (storedRole) {
+        console.log('저장된 권한:', storedRole);
+        return storedRole;
+      }
+      
+      // 기본값은 일반 사용자
+      console.log('기본 권한 사용: user');
+      return 'user';
     }
     
     // 프로필 업데이트
@@ -916,6 +979,13 @@
       const bio = document.getElementById('bio').value.trim();
       const profileColor = document.getElementById('profileColor').value.trim();
       
+      // 권한 값 가져오기 (권한 선택 필드가 표시된 경우에만)
+      const roleSelectContainer = document.getElementById('roleSelectContainer');
+      let role = null;
+      if (roleSelectContainer.style.display !== 'none') {
+        role = document.getElementById('userRole').value;
+      }
+      
       // 디버깅 정보
       console.log('폼 데이터:', {
         userid,
@@ -924,7 +994,8 @@
         email,
         phone,
         bio,
-        profileColor
+        profileColor,
+        role
       });
       
       // 필수 입력값 검증
@@ -970,6 +1041,10 @@
         const editingAdminId = document.getElementById('editProfileModal').dataset.editingAdminId || 'current';
         console.log('수정 중인 관리자 ID:', editingAdminId);
         
+        // 현재 사용자 권한 확인
+        const currentUserRole = getCurrentUserRole();
+        console.log('현재 사용자 권한:', currentUserRole);
+        
         // 데이터 형식 정의
         const standardData = {
           email: email,
@@ -983,10 +1058,19 @@
           standardData.new_password = newPassword;
         }
         
+        // 권한이 선택된 경우만 포함 (super-admin만 권한 변경 가능)
+        if (role !== null && currentUserRole === 'super-admin') {
+          standardData.role = role;
+          console.log('권한 변경:', role);
+        }
+        
         // API URL 정의
-        const apiUrl = (editingAdminId !== 'current') 
-          ? `/api/admin/users/${editingAdminId}/update`
-          : '/api/profile/update';
+        let apiUrl = '/api/profile/update';
+        
+        // 다른 관리자 정보를 수정하는 경우
+        if (editingAdminId !== 'current') {
+          apiUrl = `/api/admin/${editingAdminId}`;
+        }
         
         // HTTP 메서드 (백엔드 API 요구에 맞게 설정)
         let httpMethod = 'PUT';
@@ -1025,8 +1109,12 @@
           const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
           modal.hide();
           
-          // 프로필 정보 갱신
-          fetchUserProfile();
+          // 프로필 정보 갱신 (현재 사용자인 경우) 또는 관리자 목록 갱신 (다른 관리자인 경우)
+          if (editingAdminId === 'current') {
+            fetchUserProfile();
+          } else {
+            fetchAdminList();
+          }
           
           // 성공 메시지 표시
           alert('프로필이 성공적으로 업데이트되었습니다.');
@@ -1039,7 +1127,7 @@
           try {
             // JSON 형식으로 오류 메시지가 왔는지 확인
             const errorJson = JSON.parse(errorText);
-            profileEditError.textContent = errorJson.message || '프로필 업데이트에 실패했습니다.';
+            profileEditError.textContent = errorJson.message || errorJson.detail || '프로필 업데이트에 실패했습니다.';
           } catch(e) {
             // JSON이 아닌 경우 오류 코드에 따라 메시지 설정
             if (response.status === 422) {
@@ -1087,6 +1175,26 @@
       const loadingElement = document.getElementById('admin-loading');
       
       try {
+        // 로딩 표시 추가
+        if (!loadingElement) {
+          const loadingItem = document.createElement('li');
+          loadingItem.id = 'admin-loading';
+          loadingItem.className = 'list-group-item border-0 d-flex align-items-center px-0 py-3';
+          loadingItem.innerHTML = `
+            <div class="d-flex align-items-center justify-content-center w-100">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span class="ms-2">관리자 목록을 불러오는 중...</span>
+            </div>
+          `;
+          adminListContainer.appendChild(loadingItem);
+        }
+        
+        // 기존 목록 초기화 (로딩 요소 제외)
+        const existingItems = adminListContainer.querySelectorAll('li:not(#admin-loading)');
+        existingItems.forEach(item => item.remove());
+        
         const response = await fetch('/api/admin/list', {
           method: 'GET',
           headers: {
@@ -1102,8 +1210,9 @@
         console.log('관리자 목록:', data);
         
         // 로딩 표시 제거
-        if (loadingElement) {
-          loadingElement.remove();
+        const currentLoadingElement = document.getElementById('admin-loading');
+        if (currentLoadingElement) {
+          currentLoadingElement.remove();
         }
         
         // 관리자가 없는 경우
@@ -1155,8 +1264,9 @@
         console.error('관리자 목록 가져오기 오류:', error);
         
         // 로딩 표시 제거하고 오류 메시지 표시
-        if (loadingElement) {
-          loadingElement.innerHTML = `
+        const currentLoadingElement = document.getElementById('admin-loading');
+        if (currentLoadingElement) {
+          currentLoadingElement.innerHTML = `
             <div class="d-flex align-items-center justify-content-center w-100 py-3">
               <i class="fas fa-exclamation-circle text-danger me-2"></i>
               <span>관리자 목록을 불러오는 중 오류가 발생했습니다.</span>

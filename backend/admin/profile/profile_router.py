@@ -3,9 +3,10 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 import logging
 from config.templates import templates
-from .profile_model import ProfileUpdate, ProfileResponse, AdminListResponse, AdminUserResponse
-from .profile_service import update_profile, get_admin_list, get_admin_detail
+from .profile_model import ProfileUpdate, ProfileResponse, AdminListResponse, AdminUserResponse, AdminUpdateRequest
+from .profile_service import update_profile, get_admin_list, get_admin_detail, update_admin, get_user_role
 from util.util import verify_token
+from config.database import get_db
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -60,13 +61,35 @@ async def get_admin_users(user_id_and_payload = Depends(verify_token)):
     """
     try:
         user_id, payload = user_id_and_payload
-        # 사용자 권한 확인 (선택 사항)
-        # role = payload.get("role", "user")
-        # if role not in ["admin", "super-admin"]:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="관리자 목록을 조회할 권한이 없습니다."
-        #     )
+        
+        # 토큰에서 권한 정보 확인 (없을 경우 데이터베이스에서 조회)
+        role = payload.get("role")
+        logger.info(f"토큰에서 가져온 권한: {role}, 페이로드: {payload}")
+        
+        # 토큰에 권한 정보가 없으면 데이터베이스에서 조회
+        if not role:
+            # 데이터베이스에서 사용자 권한 조회
+            db = get_db()
+            if db is None:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="데이터베이스 연결 오류가 발생했습니다."
+                )
+            
+            # 사용자 문서 조회
+            user_ref = db.collection('user').document(user_id)
+            user_doc = user_ref.get()
+            
+            if not user_doc.exists:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="사용자 정보를 찾을 수 없습니다."
+                )
+            
+            # 사용자 데이터에서 권한 정보 추출
+            user_data = user_doc.to_dict()
+            role = user_data.get("role", "user")
+            logger.info(f"데이터베이스에서 가져온 사용자 권한: {role}")
         
         admin_list = await get_admin_list(user_id)
         return admin_list
@@ -95,13 +118,42 @@ async def get_admin_detail_by_id(admin_id: str, user_id_and_payload = Depends(ve
     """
     try:
         user_id, payload = user_id_and_payload
-        # 사용자 권한 확인 (선택 사항)
-        # role = payload.get("role", "user")
-        # if role not in ["admin", "super-admin"]:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="관리자 정보를 조회할 권한이 없습니다."
-        #     )
+        
+        # 토큰에서 권한 정보 확인 (없을 경우 데이터베이스에서 조회)
+        role = payload.get("role")
+        logger.info(f"토큰에서 가져온 권한: {role}, 페이로드: {payload}")
+        
+        # 토큰에 권한 정보가 없으면 데이터베이스에서 조회
+        if not role:
+            # 데이터베이스에서 사용자 권한 조회
+            db = get_db()
+            if db is None:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="데이터베이스 연결 오류가 발생했습니다."
+                )
+            
+            # 사용자 문서 조회
+            user_ref = db.collection('user').document(user_id)
+            user_doc = user_ref.get()
+            
+            if not user_doc.exists:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="사용자 정보를 찾을 수 없습니다."
+                )
+            
+            # 사용자 데이터에서 권한 정보 추출
+            user_data = user_doc.to_dict()
+            role = user_data.get("role", "user")
+            logger.info(f"데이터베이스에서 가져온 사용자 권한: {role}")
+        
+        # 권한 확인 (admin 또는 super-admin만 조회 가능)
+        if role not in ["admin", "super-admin"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="관리자 정보를 조회할 권한이 없습니다."
+            )
         
         admin_detail = await get_admin_detail(admin_id)
         return admin_detail
@@ -113,4 +165,71 @@ async def get_admin_detail_by_id(admin_id: str, user_id_and_payload = Depends(ve
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="관리자 정보 조회 중 오류가 발생했습니다."
+        )
+
+# 특정 관리자 정보 업데이트 API (PUT 메서드)
+@router.put("/api/admin/{admin_id}", response_model=AdminUserResponse, tags=["프로필 API"])
+@router.post("/api/admin/{admin_id}", response_model=AdminUserResponse, tags=["프로필 API"])
+async def update_admin_by_id(admin_id: str, admin_data: AdminUpdateRequest, user_id_and_payload = Depends(verify_token)):
+    """
+    특정 관리자의 정보를 업데이트하는 엔드포인트.
+    PUT 및 POST 메서드 모두 지원합니다.
+    
+    Args:
+        admin_id: 업데이트할 관리자 ID
+        admin_data: 업데이트할 관리자 정보
+    
+    JWT 토큰 인증이 필요합니다(Authorization 헤더에 Bearer 토큰 포함).
+    
+    성공 시 업데이트된 관리자 정보를 반환합니다.
+    """
+    try:
+        user_id, payload = user_id_and_payload
+        
+        # 토큰에서 권한 정보 확인 (없을 경우 데이터베이스에서 조회)
+        role = payload.get("role")
+        logger.info(f"토큰에서 가져온 권한: {role}, 페이로드: {payload}")
+        
+        # 토큰에 권한 정보가 없으면 데이터베이스에서 조회
+        if not role:
+            # 데이터베이스에서 사용자 권한 조회
+            db = get_db()
+            if db is None:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="데이터베이스 연결 오류가 발생했습니다."
+                )
+            
+            # 사용자 문서 조회
+            user_ref = db.collection('user').document(user_id)
+            user_doc = user_ref.get()
+            
+            if not user_doc.exists:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="사용자 정보를 찾을 수 없습니다."
+                )
+            
+            # 사용자 데이터에서 권한 정보 추출
+            user_data = user_doc.to_dict()
+            role = user_data.get("role", "user")
+            logger.info(f"데이터베이스에서 가져온 사용자 권한: {role}")
+        
+        # super-admin 권한 확인
+        if role != "super-admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="다른 관리자 정보를 수정할 권한이 없습니다."
+            )
+        
+        updated_admin = await update_admin(admin_id, admin_data, user_id)
+        return updated_admin
+    except HTTPException as e:
+        # HTTPException은 그대로 전파
+        raise e
+    except Exception as e:
+        logger.exception(f"관리자 정보 업데이트 중 예상치 못한 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="관리자 정보 업데이트 중 오류가 발생했습니다."
         )
