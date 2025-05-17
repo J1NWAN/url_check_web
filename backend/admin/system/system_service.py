@@ -1,4 +1,5 @@
 from config.database import get_db
+from google.cloud.firestore import CollectionReference
 from .system_model import SystemCreate, SystemResponse, SystemUpdate, SystemInspectionCreate, SystemInspectionUpdate, SystemInspectionResponse, InspectionMenuResult
 from fastapi import HTTPException, status
 import logging
@@ -17,6 +18,11 @@ COLLECTION = "systems"
 
 # 점검 이력 컬렉션 이름
 INSPECTION_COLLECTION = "inspection_history"
+
+def get_systems_collection() -> CollectionReference:
+    """시스템 컬렉션 참조를 반환합니다."""
+    db = get_db()
+    return db.collection(COLLECTION)
 
 # HTTP 상태 코드에 대한 한글 설명
 HTTP_STATUS_TEXT = {
@@ -579,3 +585,22 @@ async def get_recent_inspections(limit: int = 5) -> List[Dict[str, Any]]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"최근 점검 이력 조회 중 오류가 발생했습니다: {str(e)}"
         )
+
+async def get_system_detail(system_id: str) -> Optional[Dict]:
+    """시스템 상세 정보를 가져옵니다."""
+    try:
+        # 시스템 컬렉션에서 문서 가져오기
+        system_ref = get_systems_collection().document(system_id)
+        system_doc = system_ref.get()
+        
+        if not system_doc.exists:
+            logger.warning(f"시스템을 찾을 수 없습니다 (ID: {system_id})")
+            return None
+        
+        # 문서 데이터 반환
+        system_data = system_doc.to_dict()
+        return system_data
+    
+    except Exception as e:
+        logger.error(f"시스템 상세 정보 가져오기 오류 (ID: {system_id}): {str(e)}")
+        return None

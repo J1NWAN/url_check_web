@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request, status, Path, Query, Depends, Header
 from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordBearer
+from util.util import verify_token
 import logging
 from typing import List, Optional, Dict, Any
 import aiohttp
@@ -13,11 +15,15 @@ from .system_model import SystemCreate, SystemResponse, SystemUpdate, SystemInsp
 from .system_service import (
     create_system, get_systems, get_system, update_system, delete_system, 
     inspect_system, get_system_inspections, perform_system_inspection, 
-    save_inspection_history, get_recent_inspections
+    save_inspection_history, get_recent_inspections, get_system_detail
 )
+from history.history_service import get_system_statistics, get_latest_inspection_result
 
 # 로거 설정
 logger = logging.getLogger(__name__)
+
+# 토큰 인증 의존성
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token")
 
 # 라우터 정의
 router = APIRouter(tags=["시스템"])
@@ -328,4 +334,75 @@ async def get_recent_inspections_api(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"최근 점검 이력 조회 중 오류가 발생했습니다: {str(e)}"
+        )
+
+# 시스템 상세 정보 API
+@router.get("/api/system/{system_id}", tags=["시스템 관리 API"])
+async def get_system_detail_api(system_id: str, token: str = Depends(oauth2_scheme)):
+    """시스템의 상세 정보를 가져옵니다."""
+    try:
+        # 토큰 검증
+        verify_result = verify_token(token)
+        if not verify_result["success"]:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="토큰이 유효하지 않습니다",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # 시스템 ID 검증
+        if not system_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="시스템 ID가 필요합니다"
+            )
+        
+        # 시스템 정보 가져오기 (service 모듈의 함수 호출)
+        from .system_service import get_system_detail
+        system_info = await get_system_detail(system_id)
+        
+        if not system_info:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"시스템을 찾을 수 없습니다 (ID: {system_id})"
+            )
+        
+        # 점검 통계 정보 가져오기 (히스토리 모듈에서 가져옴)
+        statistics = await get_system_statistics(system_id)
+        latest_inspection = await get_latest_inspection_result(system_id)
+        
+        # 응답 데이터 구성
+        response_data = {
+            "id": system_id,
+            "name": system_info.get("name", ""),
+            "description": system_info.get("description", ""),
+            "url": system_info.get("url", ""),
+            "menus": system_info.get("menus", []),
+            "created_at": system_info.get("created_at", ""),
+            "updated_at": system_info.get("updated_at", ""),
+            "statistics": {
+                "total_inspections": statistics.total_inspections,
+                "success_count": statistics.success_count,
+                "error_count": statistics.error_count,
+                "success_rate": statistics.success_rate
+            }
+        }
+        
+        # 최신 점검 결과가 있는 경우 추가
+        if latest_inspection:
+            response_data["latest_inspection"] = {
+                "inspection_date": latest_inspection.inspection_date,
+                "has_error": latest_inspection.has_error
+            }
+        
+        return response_data
+    
+    except HTTPException as e:
+        # HTTP 예외는 그대로 전달
+        raise e
+    except Exception as e:
+        logger.error(f"시스템 상세 정보 API 오류: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"서버 오류: {str(e)}"
         )

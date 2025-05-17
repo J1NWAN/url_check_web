@@ -11,6 +11,52 @@
     background-position: center;
     background-size: cover;
   }
+  
+  /* 결과 상태 스타일 */
+  .status-success {
+    color: #4CAF50;
+    font-weight: bold;
+  }
+  
+  .status-error {
+    color: #F44336;
+    font-weight: bold;
+  }
+  
+  /* 로딩 애니메이션 */
+  .loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+  }
+  
+  /* 점검 결과 통계 스타일 */
+  .progress {
+    height: 6px;
+    margin-bottom: 0;
+  }
+  
+  .progress-bar-success {
+    background-color: #4CAF50;
+  }
+  
+  .progress-bar-error {
+    background-color: #F44336;
+  }
+  
+  /* 시스템 아이콘 스타일 */
+  .system-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+  }
 </style>
 {% endblock %}
 
@@ -21,203 +67,7 @@
       <div class="card my-4">
         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
           <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
-            <h6 class="text-white text-capitalize ps-3">Authors table</h6>
-          </div>
-        </div>
-        <div class="card-body px-0 pb-2">
-          <div class="table-responsive p-0">
-            <table class="table align-items-center mb-0">
-              <thead>
-                <tr>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Author</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Function</th>
-                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
-                  <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Employed</th>
-                  <th class="text-secondary opacity-7"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2 py-1">
-                      <div>
-                        <img src="../assets/img/team-2.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user1">
-                      </div>
-                      <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">John Michael</h6>
-                        <p class="text-xs text-secondary mb-0">john@creative-tim.com</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-xs font-weight-bold mb-0">Manager</p>
-                    <p class="text-xs text-secondary mb-0">Organization</p>
-                  </td>
-                  <td class="align-middle text-center text-sm">
-                    <span class="badge badge-sm bg-gradient-success">Online</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <span class="text-secondary text-xs font-weight-bold">23/04/18</span>
-                  </td>
-                  <td class="align-middle">
-                    <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                      Edit
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2 py-1">
-                      <div>
-                        <img src="../assets/img/team-3.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user2">
-                      </div>
-                      <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">Alexa Liras</h6>
-                        <p class="text-xs text-secondary mb-0">alexa@creative-tim.com</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-xs font-weight-bold mb-0">Programator</p>
-                    <p class="text-xs text-secondary mb-0">Developer</p>
-                  </td>
-                  <td class="align-middle text-center text-sm">
-                    <span class="badge badge-sm bg-gradient-secondary">Offline</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <span class="text-secondary text-xs font-weight-bold">11/01/19</span>
-                  </td>
-                  <td class="align-middle">
-                    <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                      Edit
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2 py-1">
-                      <div>
-                        <img src="../assets/img/team-4.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user3">
-                      </div>
-                      <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">Laurent Perrier</h6>
-                        <p class="text-xs text-secondary mb-0">laurent@creative-tim.com</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-xs font-weight-bold mb-0">Executive</p>
-                    <p class="text-xs text-secondary mb-0">Projects</p>
-                  </td>
-                  <td class="align-middle text-center text-sm">
-                    <span class="badge badge-sm bg-gradient-success">Online</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <span class="text-secondary text-xs font-weight-bold">19/09/17</span>
-                  </td>
-                  <td class="align-middle">
-                    <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                      Edit
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2 py-1">
-                      <div>
-                        <img src="../assets/img/team-3.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user4">
-                      </div>
-                      <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">Michael Levi</h6>
-                        <p class="text-xs text-secondary mb-0">michael@creative-tim.com</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-xs font-weight-bold mb-0">Programator</p>
-                    <p class="text-xs text-secondary mb-0">Developer</p>
-                  </td>
-                  <td class="align-middle text-center text-sm">
-                    <span class="badge badge-sm bg-gradient-success">Online</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <span class="text-secondary text-xs font-weight-bold">24/12/08</span>
-                  </td>
-                  <td class="align-middle">
-                    <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                      Edit
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2 py-1">
-                      <div>
-                        <img src="../assets/img/team-2.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user5">
-                      </div>
-                      <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">Richard Gran</h6>
-                        <p class="text-xs text-secondary mb-0">richard@creative-tim.com</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-xs font-weight-bold mb-0">Manager</p>
-                    <p class="text-xs text-secondary mb-0">Executive</p>
-                  </td>
-                  <td class="align-middle text-center text-sm">
-                    <span class="badge badge-sm bg-gradient-secondary">Offline</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <span class="text-secondary text-xs font-weight-bold">04/10/21</span>
-                  </td>
-                  <td class="align-middle">
-                    <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                      Edit
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2 py-1">
-                      <div>
-                        <img src="../assets/img/team-4.jpg" class="avatar avatar-sm me-3 border-radius-lg" alt="user6">
-                      </div>
-                      <div class="d-flex flex-column justify-content-center">
-                        <h6 class="mb-0 text-sm">Miriam Eric</h6>
-                        <p class="text-xs text-secondary mb-0">miriam@creative-tim.com</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-xs font-weight-bold mb-0">Programator</p>
-                    <p class="text-xs text-secondary mb-0">Developer</p>
-                  </td>
-                  <td class="align-middle text-center text-sm">
-                    <span class="badge badge-sm bg-gradient-secondary">Offline</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <span class="text-secondary text-xs font-weight-bold">14/09/20</span>
-                  </td>
-                  <td class="align-middle">
-                    <a href="javascript:;" class="text-secondary font-weight-bold text-xs" data-toggle="tooltip" data-original-title="Edit user">
-                      Edit
-                    </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-12">
-      <div class="card my-4">
-        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-          <div class="bg-gradient-dark shadow-dark border-radius-lg pt-4 pb-3">
-            <h6 class="text-white text-capitalize ps-3">Projects table</h6>
+            <h6 class="text-white text-capitalize ps-3">점검 이력 목록</h6>
           </div>
         </div>
         <div class="card-body px-0 pb-2">
@@ -225,210 +75,23 @@
             <table class="table align-items-center justify-content-center mb-0">
               <thead>
                 <tr>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Project</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Budget</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Status</th>
-                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">Completion</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">시스템명</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">최근 점검 일시</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">최근 점검 결과</th>
+                  <th class="text-uppercase text-secondary text-xxs font-weight-bolder text-center opacity-7 ps-2">점검 결과 통계</th>
                   <th></th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2">
-                      <div>
-                        <img src="../assets/img/small-logos/logo-asana.svg" class="avatar avatar-sm rounded-circle me-2" alt="spotify">
+              <tbody id="history-table-body">
+                <!-- 점검 이력 데이터가 여기에 동적으로.추가됩니다 -->
+                <tr id="loading-row">
+                  <td colspan="5">
+                    <div class="loading-container">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                       </div>
-                      <div class="my-auto">
-                        <h6 class="mb-0 text-sm">Asana</h6>
-                      </div>
+                      <span class="ms-2">점검 이력을 불러오는 중...</span>
                     </div>
-                  </td>
-                  <td>
-                    <p class="text-sm font-weight-bold mb-0">$2,500</p>
-                  </td>
-                  <td>
-                    <span class="text-xs font-weight-bold">working</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <div class="d-flex align-items-center justify-content-center">
-                      <span class="me-2 text-xs font-weight-bold">60%</span>
-                      <div>
-                        <div class="progress">
-                          <div class="progress-bar bg-gradient-info" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="align-middle">
-                    <button class="btn btn-link text-secondary mb-0">
-                      <i class="fa fa-ellipsis-v text-xs"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2">
-                      <div>
-                        <img src="../assets/img/small-logos/github.svg" class="avatar avatar-sm rounded-circle me-2" alt="invision">
-                      </div>
-                      <div class="my-auto">
-                        <h6 class="mb-0 text-sm">Github</h6>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-sm font-weight-bold mb-0">$5,000</p>
-                  </td>
-                  <td>
-                    <span class="text-xs font-weight-bold">done</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <div class="d-flex align-items-center justify-content-center">
-                      <span class="me-2 text-xs font-weight-bold">100%</span>
-                      <div>
-                        <div class="progress">
-                          <div class="progress-bar bg-gradient-success" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="align-middle">
-                    <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                      <i class="fa fa-ellipsis-v text-xs"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2">
-                      <div>
-                        <img src="../assets/img/small-logos/logo-atlassian.svg" class="avatar avatar-sm rounded-circle me-2" alt="jira">
-                      </div>
-                      <div class="my-auto">
-                        <h6 class="mb-0 text-sm">Atlassian</h6>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-sm font-weight-bold mb-0">$3,400</p>
-                  </td>
-                  <td>
-                    <span class="text-xs font-weight-bold">canceled</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <div class="d-flex align-items-center justify-content-center">
-                      <span class="me-2 text-xs font-weight-bold">30%</span>
-                      <div>
-                        <div class="progress">
-                          <div class="progress-bar bg-gradient-danger" role="progressbar" aria-valuenow="30" aria-valuemin="0" aria-valuemax="30" style="width: 30%;"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="align-middle">
-                    <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                      <i class="fa fa-ellipsis-v text-xs"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2">
-                      <div>
-                        <img src="../assets/img/small-logos/bootstrap.svg" class="avatar avatar-sm rounded-circle me-2" alt="webdev">
-                      </div>
-                      <div class="my-auto">
-                        <h6 class="mb-0 text-sm">Bootstrap</h6>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-sm font-weight-bold mb-0">$14,000</p>
-                  </td>
-                  <td>
-                    <span class="text-xs font-weight-bold">working</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <div class="d-flex align-items-center justify-content-center">
-                      <span class="me-2 text-xs font-weight-bold">80%</span>
-                      <div>
-                        <div class="progress">
-                          <div class="progress-bar bg-gradient-info" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="80" style="width: 80%;"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="align-middle">
-                    <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                      <i class="fa fa-ellipsis-v text-xs"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2">
-                      <div>
-                        <img src="../assets/img/small-logos/logo-slack.svg" class="avatar avatar-sm rounded-circle me-2" alt="slack">
-                      </div>
-                      <div class="my-auto">
-                        <h6 class="mb-0 text-sm">Slack</h6>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-sm font-weight-bold mb-0">$1,000</p>
-                  </td>
-                  <td>
-                    <span class="text-xs font-weight-bold">canceled</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <div class="d-flex align-items-center justify-content-center">
-                      <span class="me-2 text-xs font-weight-bold">0%</span>
-                      <div>
-                        <div class="progress">
-                          <div class="progress-bar bg-gradient-success" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="0" style="width: 0%;"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="align-middle">
-                    <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                      <i class="fa fa-ellipsis-v text-xs"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="d-flex px-2">
-                      <div>
-                        <img src="../assets/img/small-logos/devto.svg" class="avatar avatar-sm rounded-circle me-2" alt="xd">
-                      </div>
-                      <div class="my-auto">
-                        <h6 class="mb-0 text-sm">Devto</h6>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <p class="text-sm font-weight-bold mb-0">$2,300</p>
-                  </td>
-                  <td>
-                    <span class="text-xs font-weight-bold">done</span>
-                  </td>
-                  <td class="align-middle text-center">
-                    <div class="d-flex align-items-center justify-content-center">
-                      <span class="me-2 text-xs font-weight-bold">100%</span>
-                      <div>
-                        <div class="progress">
-                          <div class="progress-bar bg-gradient-success" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="align-middle">
-                    <button class="btn btn-link text-secondary mb-0" aria-haspopup="true" aria-expanded="false">
-                      <i class="fa fa-ellipsis-v text-xs"></i>
-                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -438,37 +101,210 @@
       </div>
     </div>
   </div>
-  <footer class="footer py-4  ">
-    <div class="container-fluid">
-      <div class="row align-items-center justify-content-lg-between">
-        <div class="col-lg-6 mb-lg-0 mb-4">
-          <div class="copyright text-center text-sm text-muted text-lg-start">
-            © <script>
-              document.write(new Date().getFullYear())
-            </script>,
-            made with <i class="fa fa-heart"></i> by
-            <a href="https://www.creative-tim.com" class="font-weight-bold" target="_blank">Creative Tim</a>
-            for a better web.
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <ul class="nav nav-footer justify-content-center justify-content-lg-end">
-            <li class="nav-item">
-              <a href="https://www.creative-tim.com" class="nav-link text-muted" target="_blank">Creative Tim</a>
-            </li>
-            <li class="nav-item">
-              <a href="https://www.creative-tim.com/presentation" class="nav-link text-muted" target="_blank">About Us</a>
-            </li>
-            <li class="nav-item">
-              <a href="https://www.creative-tim.com/blog" class="nav-link text-muted" target="_blank">Blog</a>
-            </li>
-            <li class="nav-item">
-              <a href="https://www.creative-tim.com/license" class="nav-link pe-0 text-muted" target="_blank">License</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </footer>
 </div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 사이드바 활성화
+    const historyLink = document.querySelector('a[data-nav-id="history"]');
+    if (historyLink) {
+      historyLink.classList.add('active', 'bg-gradient-dark', 'text-white');
+      historyLink.classList.remove('text-dark');
+    }
+    
+    // 저장된 토큰 가져오기
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    
+    if (!token) {
+      window.location.href = '/auth/signin';
+      return;
+    }
+    
+    // 점검 이력 데이터 가져오기
+    fetchInspectionHistory();
+    
+    // 점검 이력 데이터 가져오기 함수
+    async function fetchInspectionHistory() {
+      try {
+        // API 호출로 시스템별 점검 이력 가져오기
+        const response = await fetch('/api/inspection/history/summary', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('점검 이력 정보를 가져오는데 실패했습니다.');
+        }
+        
+        const historyData = await response.json();
+        console.log('API에서 가져온 점검 이력 정보:', historyData);
+        
+        // 로딩 행 제거
+        const loadingRow = document.getElementById('loading-row');
+        if (loadingRow) {
+          loadingRow.remove();
+        }
+        
+        // 테이블 본문 요소
+        const tableBody = document.getElementById('history-table-body');
+        
+        // 데이터가 없는 경우
+        if (!historyData || !historyData.systems || historyData.systems.length === 0) {
+          const noDataRow = document.createElement('tr');
+          noDataRow.innerHTML = `
+            <td colspan="5" class="text-center py-4">
+              <p class="text-secondary mb-0">등록된 점검 이력이 없습니다.</p>
+            </td>
+          `;
+          tableBody.appendChild(noDataRow);
+          return;
+        }
+        
+        // 시스템별 점검 이력 렌더링
+        historyData.systems.forEach(system => {
+          // 시스템 이름과 아이콘 배경색에 사용할 색상 생성
+          const systemColor = getSystemColor(system.system_id);
+          
+          // 점검 결과 상태 결정 (하나라도 오류가 있으면 ERROR, 아니면 SUCCESS)
+          let statusClass = 'status-success';
+          let statusText = 'SUCCESS';
+          
+          if (system.latest_result && system.latest_result.has_error) {
+            statusClass = 'status-error';
+            statusText = 'ERROR';
+          }
+          
+          // 점검 일시 포맷팅
+          let formattedDate = '점검 이력 없음';
+          if (system.latest_result && system.latest_result.inspection_date) {
+            formattedDate = formatDateTime(system.latest_result.inspection_date);
+          }
+          
+          // 성공률 계산
+          const successRate = system.statistics ? system.statistics.success_rate : 0;
+          
+          // 행 요소 생성
+          const row = document.createElement('tr');
+          
+          // 행 내용 설정
+          row.innerHTML = `
+            <td>
+              <div class="d-flex px-2">
+                <div class="system-icon me-2" style="background-color: ${systemColor}">
+                  ${getSystemInitial(system.system_name)}
+                </div>
+                <div class="my-auto">
+                  <h6 class="mb-0 text-sm">${system.system_name}</h6>
+                </div>
+              </div>
+            </td>
+            <td>
+              <p class="text-sm font-weight-bold mb-0">${formattedDate}</p>
+            </td>
+            <td>
+              <span class="text-xs ${statusClass}">${statusText}</span>
+            </td>
+            <td class="align-middle text-center">
+              <div class="d-flex align-items-center justify-content-center">
+                <span class="me-2 text-xs font-weight-bold">${successRate}%</span>
+                <div style="width: 100px;">
+                  <div class="progress">
+                    <div class="progress-bar bg-gradient-success" role="progressbar" 
+                         aria-valuenow="${successRate}" aria-valuemin="0" aria-valuemax="100" 
+                         style="width: ${successRate}%;"></div>
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="align-middle">
+              <button class="btn btn-link text-secondary mb-0" onclick="viewSystemDetails('${system.system_id}')">
+                <i class="fa fa-chevron-right text-xs"></i>
+              </button>
+            </td>
+          `;
+          
+          // 테이블에 행 추가
+          tableBody.appendChild(row);
+        });
+        
+      } catch (error) {
+        console.error('점검 이력 가져오기 오류:', error);
+        
+        // 로딩 행 제거
+        const loadingRow = document.getElementById('loading-row');
+        if (loadingRow) {
+          loadingRow.innerHTML = `
+            <td colspan="5" class="text-center py-4">
+              <div class="d-flex align-items-center justify-content-center">
+                <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                <span>점검 이력을 불러오는 중 오류가 발생했습니다.</span>
+              </div>
+            </td>
+          `;
+        }
+      }
+    }
+    
+    // 시스템 ID를 기반으로 색상 생성
+    function getSystemColor(systemId) {
+      // 기본 컬러 팔레트
+      const colorPalette = [
+        '#3F51B5', '#009688', '#FF5722', '#607D8B', 
+        '#9C27B0', '#4CAF50', '#FFC107', '#795548'
+      ];
+      
+      // systemId를 숫자로 변환
+      let numericValue = 0;
+      for (let i = 0; i < systemId.length; i++) {
+        numericValue += systemId.charCodeAt(i);
+      }
+      
+      // 팔레트에서 색상 선택
+      return colorPalette[numericValue % colorPalette.length];
+    }
+    
+    // 시스템 이름에서 이니셜 추출
+    function getSystemInitial(systemName) {
+      if (!systemName) return '?';
+      
+      // 이름의 첫 글자를 대문자로 반환
+      return systemName.charAt(0).toUpperCase();
+    }
+    
+    // 날짜 포맷팅
+    function formatDateTime(dateStr) {
+      try {
+        const date = new Date(dateStr);
+        
+        // 유효한 날짜인지 확인
+        if (isNaN(date.getTime())) {
+          return dateStr; // 유효하지 않은 경우 원본 문자열 반환
+        }
+        
+        // YYYY-MM-DD HH:MM:SS 형태로 포맷팅
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      } catch (error) {
+        console.error('날짜 포맷팅 오류:', error);
+        return dateStr; // 오류 발생 시 원본 문자열 반환
+      }
+    }
+  });
+  
+  // 시스템 상세 페이지로 이동
+  function viewSystemDetails(systemId) {
+    if (systemId) {
+      window.location.href = `/admin/history/detail?system_id=${systemId}`;
+    }
+  }
+</script>
 {% endblock %}
