@@ -68,6 +68,10 @@ app.include_router(profile_router)
 from admin.system.system_router import router as system_router
 app.include_router(system_router)
 
+# 점검 이력 라우터 등록
+from history.history_router import router as history_router
+app.include_router(history_router)
+
 # 스케줄러 API 라우터 등록
 from scheduler.api import router as scheduler_router
 app.include_router(scheduler_router)
