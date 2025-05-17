@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional
+from typing import Optional, List, Dict
 import re
 
 class UserCreate(BaseModel):
@@ -49,13 +49,17 @@ class Token(BaseModel):
     userid: str
     name: str
 
+class AuthItem(BaseModel):
+    role: str
+    role_name: str
+
 class CurrentUser(BaseModel):
     id: str
     userid: str
     name: str
     email: Optional[EmailStr] = None
-    role: Optional[str] = None
+    auth: Optional[List[AuthItem]] = None
     created_at: Optional[str] = None
     phone: Optional[str] = None
     bio: Optional[str] = None
-    profile_color: Optional[str] = None 
+    profile_color: Optional[str] = None

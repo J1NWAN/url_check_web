@@ -1,5 +1,5 @@
 from config.database import get_db
-from .profile_model import ProfileUpdate, ProfileResponse, AdminUserResponse, AdminListResponse, AdminUpdateRequest
+from .profile_model import ProfileUpdate, ProfileResponse, AdminUserResponse, AdminListResponse, AdminUpdateRequest, AuthItem
 from util.util import get_password_hash, verify_password
 from fastapi import HTTPException, status
 import logging
@@ -136,6 +136,30 @@ async def get_admin_list(current_user_id: str) -> AdminListResponse:
                 continue
                 
             user_data = doc.to_dict()
+            
+            # 권한 정보 처리
+            auth_items = []
+            
+            # DB에 이미 auth 배열이 있는 경우
+            if user_data.get("auth") and isinstance(user_data.get("auth"), list):
+                auth_items = [AuthItem(**item) if isinstance(item, dict) else item for item in user_data.get("auth")]
+            # 기존 role 필드가 있는 경우 auth 배열로 변환
+            elif user_data.get("role"):
+                role = user_data.get("role")
+                
+                # role에 따른 역할명 지정
+                role_name = "일반 사용자"
+                if role == "admin":
+                    role_name = "관리자"
+                elif role == "super-admin":
+                    role_name = "슈퍼 관리자"
+                    
+                # AuthItem 객체 생성
+                auth_items = [AuthItem(role=role, role_name=role_name)]
+            # 둘 다 없는 경우 기본값으로 일반 사용자 권한 설정
+            else:
+                auth_items = [AuthItem(role="user", role_name="일반 사용자")]
+            
             admin_list.append(
                 AdminUserResponse(
                     id=doc.id,
@@ -145,7 +169,7 @@ async def get_admin_list(current_user_id: str) -> AdminListResponse:
                     phone=user_data.get("phone"),
                     bio=user_data.get("bio"),
                     profile_color=user_data.get("profile_color", "#000000"),
-                    role=user_data.get("role", "user")
+                    auth=auth_items
                 )
             )
         
@@ -160,13 +184,13 @@ async def get_admin_list(current_user_id: str) -> AdminListResponse:
 
 async def get_admin_detail(admin_id: str) -> AdminUserResponse:
     """
-    특정 사용자의 상세 정보를 가져옵니다.
+    관리자 상세 정보를 조회합니다.
     
     Args:
-        admin_id: 조회할 사용자 ID
+        admin_id: 조회할 관리자 ID
         
     Returns:
-        사용자 상세 정보
+        관리자 상세 정보
         
     Raises:
         HTTPException: 데이터베이스 연결 오류 또는 사용자를 찾을 수 없는 경우
@@ -195,6 +219,29 @@ async def get_admin_detail(admin_id: str) -> AdminUserResponse:
         # 사용자 데이터 가져오기
         user_data = user_doc.to_dict()
         
+        # 권한 정보 처리
+        auth_items = []
+        
+        # DB에 이미 auth 배열이 있는 경우
+        if user_data.get("auth") and isinstance(user_data.get("auth"), list):
+            auth_items = [AuthItem(**item) if isinstance(item, dict) else item for item in user_data.get("auth")]
+        # 기존 role 필드가 있는 경우 auth 배열로 변환
+        elif user_data.get("role"):
+            role = user_data.get("role")
+            
+            # role에 따른 역할명 지정
+            role_name = "일반 사용자"
+            if role == "admin":
+                role_name = "관리자"
+            elif role == "super-admin":
+                role_name = "슈퍼 관리자"
+                
+            # AuthItem 객체 생성
+            auth_items = [AuthItem(role=role, role_name=role_name)]
+        # 둘 다 없는 경우 기본값으로 일반 사용자 권한 설정
+        else:
+            auth_items = [AuthItem(role="user", role_name="일반 사용자")]
+        
         return AdminUserResponse(
             id=admin_id,
             userid=user_data.get("userid"),
@@ -203,7 +250,7 @@ async def get_admin_detail(admin_id: str) -> AdminUserResponse:
             phone=user_data.get("phone"),
             bio=user_data.get("bio"),
             profile_color=user_data.get("profile_color", "#000000"),
-            role=user_data.get("role")
+            auth=auth_items
         )
         
     except HTTPException:
@@ -273,14 +320,26 @@ async def update_admin(admin_id: str, admin_data: AdminUpdateRequest, current_us
             update_data["profile_color"] = admin_data.profile_color
         
         # 권한 업데이트 (이미 라우터에서 super-admin 권한 검증 완료)
-        if admin_data.role is not None:
-            logger.info(f"권한 업데이트: {admin_data.role}")
-            # 빈 문자열인 경우 None으로 저장 (권한 없음)
-            if admin_data.role == "":
-                update_data["role"] = None
-                logger.info("권한을 None으로 설정 (권한 없음)")
+        if admin_data.auth is not None:
+            logger.info(f"권한 업데이트: {admin_data.auth}")
+            
+            # auth 배열 데이터 준비
+            auth_list = []
+            for auth_item in admin_data.auth:
+                auth_list.append({
+                    "role": auth_item.role,
+                    "role_name": auth_item.role_name
+                })
+            
+            # Firestore에 저장 (빈 배열인 경우도 저장)
+            update_data["auth"] = auth_list
+            
+            # 기존 role 필드 제거 (호환성을 위해 유지할 수도 있음)
+            # 첫 번째 권한 정보가 있으면 role 필드에도 저장
+            if auth_list and auth_list[0]["role"]:
+                update_data["role"] = auth_list[0]["role"]
             else:
-                update_data["role"] = admin_data.role
+                update_data["role"] = None
             
         # 비밀번호 변경 처리
         if admin_data.new_password:
@@ -294,6 +353,29 @@ async def update_admin(admin_id: str, admin_data: AdminUpdateRequest, current_us
         # 업데이트된 사용자 정보 조회
         updated_user = user_ref.get().to_dict()
         
+        # auth 정보 처리
+        auth_items = []
+        
+        # DB에 이미 auth 배열이 있는 경우
+        if updated_user.get("auth") and isinstance(updated_user.get("auth"), list):
+            auth_items = [AuthItem(**item) if isinstance(item, dict) else item for item in updated_user.get("auth")]
+        # 기존 role 필드가 있는 경우 auth 배열로 변환
+        elif updated_user.get("role"):
+            role = updated_user.get("role")
+            
+            # role에 따른 역할명 지정
+            role_name = "일반 사용자"
+            if role == "admin":
+                role_name = "관리자"
+            elif role == "super-admin":
+                role_name = "슈퍼 관리자"
+                
+            # AuthItem 객체 생성
+            auth_items = [AuthItem(role=role, role_name=role_name)]
+        # 둘 다 없는 경우 기본값으로 일반 사용자 권한 설정
+        else:
+            auth_items = [AuthItem(role="user", role_name="일반 사용자")]
+        
         return AdminUserResponse(
             id=admin_id,
             userid=updated_user.get("userid"),
@@ -302,7 +384,7 @@ async def update_admin(admin_id: str, admin_data: AdminUpdateRequest, current_us
             phone=updated_user.get("phone"),
             bio=updated_user.get("bio"),
             profile_color=updated_user.get("profile_color"),
-            role=updated_user.get("role", "user")
+            auth=auth_items
         )
         
     except HTTPException:
@@ -315,7 +397,7 @@ async def update_admin(admin_id: str, admin_data: AdminUpdateRequest, current_us
             detail="관리자 정보 업데이트 중 오류가 발생했습니다."
         )
 
-async def get_user_role(user_id: str) -> str:
+async def get_user_auth(user_id: str) -> str:
     """
     사용자의 권한 정보를 조회합니다.
     
@@ -352,9 +434,17 @@ async def get_user_role(user_id: str) -> str:
         # 사용자 데이터 가져오기
         user_data = user_doc.to_dict()
         
-        # 권한 정보 반환 (기본값은 일반 사용자)
+        # auth 정보 먼저 확인
+        if user_data.get("auth") and isinstance(user_data.get("auth"), list) and len(user_data.get("auth")) > 0:
+            auth_item = user_data.get("auth")[0]
+            if isinstance(auth_item, dict) and "role" in auth_item:
+                role = auth_item["role"]
+                logger.info(f"사용자 {user_id}의 권한(auth): {role}")
+                return role
+        
+        # auth 정보가 없으면 기존 role 필드 확인
         role = user_data.get("role", "user")
-        logger.info(f"사용자 {user_id}의 권한: {role}")
+        logger.info(f"사용자 {user_id}의 권한(role): {role}")
         
         return role
         

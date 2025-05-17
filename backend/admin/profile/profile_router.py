@@ -3,16 +3,59 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 import logging
 from config.templates import templates
-from .profile_model import ProfileUpdate, ProfileResponse, AdminListResponse, AdminUserResponse, AdminUpdateRequest
-from .profile_service import update_profile, get_admin_list, get_admin_detail, update_admin, get_user_role
+from .profile_model import ProfileUpdate, ProfileResponse, AdminListResponse, AdminUserResponse, AdminUpdateRequest, AuthItem
+from .profile_service import update_profile, get_admin_list, get_admin_detail, update_admin, get_user_auth
 from util.util import verify_token
 from config.database import get_db
+from typing import Dict, Any
 
 # 로거 설정
 logger = logging.getLogger(__name__)
 
 # 라우터 정의
 router = APIRouter(tags=["프로필"])
+
+# 사용자 권한 가져오기 함수
+async def get_user_role_from_token(payload: Dict[str, Any], user_id: str) -> str:
+    """
+    토큰 페이로드 또는 데이터베이스에서 사용자 권한을 가져옵니다.
+    
+    Args:
+        payload: 토큰 페이로드
+        user_id: 사용자 ID
+        
+    Returns:
+        사용자 권한 (user, admin, super-admin)
+        
+    Raises:
+        HTTPException: 데이터베이스 연결 오류 또는 사용자를 찾을 수 없는 경우
+    """
+    logger.info(f"토큰 페이로드: {payload}")
+    
+    # 토큰에서 auth 정보 확인
+    if payload.get("auth"):
+        # auth가 딕셔너리인 경우 (직접 토큰에 포함)
+        if isinstance(payload.get("auth"), dict) and "role" in payload.get("auth"):
+            role = payload.get("auth").get("role")
+            logger.info(f"토큰에서 가져온 권한(auth dict): {role}")
+            return role
+        # auth가 리스트인 경우 (API 응답 형식)
+        elif isinstance(payload.get("auth"), list) and len(payload.get("auth")) > 0:
+            auth_item = payload.get("auth")[0]
+            if isinstance(auth_item, dict) and "role" in auth_item:
+                role = auth_item["role"]
+                logger.info(f"토큰에서 가져온 권한(auth list): {role}")
+                return role
+    
+    # 토큰에서 기존 role 정보 확인
+    if payload.get("role"):
+        role = payload.get("role")
+        logger.info(f"토큰에서 가져온 권한(role): {role}")
+        return role
+    
+    # 토큰에 권한 정보가 없으면 데이터베이스에서 조회
+    logger.info("토큰에 권한 정보가 없어 데이터베이스에서 조회합니다.")
+    return await get_user_auth(user_id)
 
 # 프로필 페이지
 @router.get("/admin/profile")
@@ -63,33 +106,7 @@ async def get_admin_users(user_id_and_payload = Depends(verify_token)):
         user_id, payload = user_id_and_payload
         
         # 토큰에서 권한 정보 확인 (없을 경우 데이터베이스에서 조회)
-        role = payload.get("role")
-        logger.info(f"토큰에서 가져온 권한: {role}, 페이로드: {payload}")
-        
-        # 토큰에 권한 정보가 없으면 데이터베이스에서 조회
-        if not role:
-            # 데이터베이스에서 사용자 권한 조회
-            db = get_db()
-            if db is None:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="데이터베이스 연결 오류가 발생했습니다."
-                )
-            
-            # 사용자 문서 조회
-            user_ref = db.collection('user').document(user_id)
-            user_doc = user_ref.get()
-            
-            if not user_doc.exists:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="사용자 정보를 찾을 수 없습니다."
-                )
-            
-            # 사용자 데이터에서 권한 정보 추출
-            user_data = user_doc.to_dict()
-            role = user_data.get("role", "user")
-            logger.info(f"데이터베이스에서 가져온 사용자 권한: {role}")
+        role = await get_user_role_from_token(payload, user_id)
         
         admin_list = await get_admin_list(user_id)
         return admin_list
@@ -120,33 +137,7 @@ async def get_admin_detail_by_id(admin_id: str, user_id_and_payload = Depends(ve
         user_id, payload = user_id_and_payload
         
         # 토큰에서 권한 정보 확인 (없을 경우 데이터베이스에서 조회)
-        role = payload.get("role")
-        logger.info(f"토큰에서 가져온 권한: {role}, 페이로드: {payload}")
-        
-        # 토큰에 권한 정보가 없으면 데이터베이스에서 조회
-        if not role:
-            # 데이터베이스에서 사용자 권한 조회
-            db = get_db()
-            if db is None:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="데이터베이스 연결 오류가 발생했습니다."
-                )
-            
-            # 사용자 문서 조회
-            user_ref = db.collection('user').document(user_id)
-            user_doc = user_ref.get()
-            
-            if not user_doc.exists:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="사용자 정보를 찾을 수 없습니다."
-                )
-            
-            # 사용자 데이터에서 권한 정보 추출
-            user_data = user_doc.to_dict()
-            role = user_data.get("role", "user")
-            logger.info(f"데이터베이스에서 가져온 사용자 권한: {role}")
+        role = await get_user_role_from_token(payload, user_id)
         
         # 권한 확인 (admin 또는 super-admin만 조회 가능)
         if role not in ["admin", "super-admin"]:
@@ -187,33 +178,7 @@ async def update_admin_by_id(admin_id: str, admin_data: AdminUpdateRequest, user
         user_id, payload = user_id_and_payload
         
         # 토큰에서 권한 정보 확인 (없을 경우 데이터베이스에서 조회)
-        role = payload.get("role")
-        logger.info(f"토큰에서 가져온 권한: {role}, 페이로드: {payload}")
-        
-        # 토큰에 권한 정보가 없으면 데이터베이스에서 조회
-        if not role:
-            # 데이터베이스에서 사용자 권한 조회
-            db = get_db()
-            if db is None:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="데이터베이스 연결 오류가 발생했습니다."
-                )
-            
-            # 사용자 문서 조회
-            user_ref = db.collection('user').document(user_id)
-            user_doc = user_ref.get()
-            
-            if not user_doc.exists:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="사용자 정보를 찾을 수 없습니다."
-                )
-            
-            # 사용자 데이터에서 권한 정보 추출
-            user_data = user_doc.to_dict()
-            role = user_data.get("role", "user")
-            logger.info(f"데이터베이스에서 가져온 사용자 권한: {role}")
+        role = await get_user_role_from_token(payload, user_id)
         
         # super-admin 권한 확인
         if role != "super-admin":

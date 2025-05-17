@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional, List
+from typing import Optional, List, Dict
 import re
 
 class ProfileUpdate(BaseModel):
@@ -35,6 +35,11 @@ class ProfileResponse(BaseModel):
     bio: Optional[str] = None
     profile_color: Optional[str] = None
 
+class AuthItem(BaseModel):
+    """권한 정보 모델"""
+    role: str
+    role_name: str
+
 class AdminUserResponse(BaseModel):
     """관리자 사용자 응답 모델"""
     id: str
@@ -44,7 +49,7 @@ class AdminUserResponse(BaseModel):
     phone: Optional[str] = None
     bio: Optional[str] = None
     profile_color: Optional[str] = None
-    role: Optional[str] = "user"
+    auth: Optional[List[AuthItem]] = None
 
 class AdminListResponse(BaseModel):
     """관리자 목록 응답 모델"""
@@ -61,7 +66,7 @@ class AdminUpdateRequest(BaseModel):
     bio: Optional[str] = Field(None, description="자기소개")
     new_password: Optional[str] = Field(None, min_length=8, max_length=20, description="새 비밀번호")
     profile_color: Optional[str] = None
-    role: Optional[str] = Field(None, description="사용자 권한 (user, admin, super-admin)")
+    auth: Optional[List[AuthItem]] = Field(None, description="사용자 권한")
     
     @validator('phone')
     def validate_phone(cls, v):
@@ -78,9 +83,11 @@ class AdminUpdateRequest(BaseModel):
                 raise ValueError('비밀번호는 8~20자 사이여야 합니다')
         return v
     
-    @validator('role')
-    def validate_role(cls, v):
+    @validator('auth')
+    def validate_auth(cls, v):
         """권한 검증"""
-        if v is not None and v not in ["", "user", "admin", "super-admin"]:
-            raise ValueError('유효한 권한이 아닙니다. 권한 없음, user, admin, super-admin 중 하나여야 합니다.')
+        if v is not None:
+            for auth_item in v:
+                if auth_item.role not in ["", "user", "admin", "super-admin"]:
+                    raise ValueError('유효한 권한이 아닙니다. 권한 없음, user, admin, super-admin 중 하나여야 합니다.')
         return v

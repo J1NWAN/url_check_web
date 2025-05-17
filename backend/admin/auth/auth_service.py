@@ -1,6 +1,6 @@
 from util.util import get_password_hash, verify_password, create_access_token
 from config.database import get_db
-from .auth_model import UserCreate, UserResponse, UserLogin, Token, CurrentUser
+from .auth_model import UserCreate, UserResponse, UserLogin, Token, CurrentUser, AuthItem
 from fastapi import HTTPException, status
 import logging
 from datetime import datetime, timedelta
@@ -136,11 +136,28 @@ async def login_user(login_data: UserLogin) -> Token:
     # 로그인 성공 처리
     logger.info(f"로그인 성공: {login_data.userid}")
     
+    # 사용자 권한 정보 가져오기
+    auth_info = None
+    
+    # DB에 이미 auth 배열이 있는 경우
+    if user_data.get("auth") and isinstance(user_data.get("auth"), list) and len(user_data.get("auth")) > 0:
+        # 첫 번째 권한 항목만 토큰에 포함 (단순화)
+        auth_item = user_data.get("auth")[0]
+        if isinstance(auth_item, dict) and "role" in auth_item:
+            auth_info = {"role": auth_item["role"]}
+    # 기존 role 필드가 있는 경우
+    elif user_data.get("role"):
+        auth_info = {"role": user_data.get("role")}
+    # 둘 다 없는 경우 기본값
+    else:
+        auth_info = {"role": "user"}
+    
     # 토큰에 담을 데이터
     token_data = {
         "sub": user_doc.id,
         "userid": user_data.get("userid"),
         "name": user_data.get("name"),
+        "auth": auth_info  # auth 정보 추가
     }
     
     # 토큰 생성
@@ -196,15 +213,35 @@ async def get_current_user(user_id: str) -> CurrentUser:
         else:
             created_at_str = None
             
-        # 사용자 역할 확인 (기본값: 'user')
-        role = user_data.get("role", "user")
+        # 사용자 auth 정보 처리
+        auth_items = []
+        
+        # DB에 이미 auth 배열이 있는 경우 그대로 사용
+        if user_data.get("auth"):
+            auth_items = user_data.get("auth")
+        # 기존 role 필드가 있는 경우 auth 배열로 변환
+        elif user_data.get("role"):
+            role = user_data.get("role")
+            
+            # role에 따른 역할명 지정
+            role_name = "일반 사용자"
+            if role == "admin":
+                role_name = "관리자"
+            elif role == "super-admin":
+                role_name = "슈퍼 관리자"
+                
+            # AuthItem 객체 생성
+            auth_items = [AuthItem(role=role, role_name=role_name)]
+        # 둘 다 없는 경우 기본값으로 일반 사용자 권한 설정
+        else:
+            auth_items = [AuthItem(role="user", role_name="일반 사용자")]
         
         return CurrentUser(
             id=user_doc.id,
             userid=user_data.get("userid"),
             name=user_data.get("name"),
             email=user_data.get("email"),
-            role=role,
+            auth=auth_items,
             created_at=created_at_str,
             phone=user_data.get("phone"),
             bio=user_data.get("bio"),

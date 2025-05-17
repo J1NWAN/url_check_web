@@ -107,7 +107,7 @@
         <div class="h-100">
           <h5 class="mb-1 user-name"></h5>
           <p class="mb-0 font-weight-normal text-sm">
-            CEO / Co-Founder
+            <span class="user-role-name"></span>
           </p>
         </div>
       </div>
@@ -436,8 +436,26 @@
         const userData = await response.json();
         console.log('API에서 가져온 사용자 정보:', userData);
         
+        // 사용자 권한 정보 처리
+        let userRole = 'user'; // 기본값
+        let userRoleName = '일반 사용자'; // 기본값
+        
+        if (userData.auth && userData.auth.length > 0) {
+          userRole = userData.auth[0].role || 'user';
+          userRoleName = userData.auth[0].role_name || '일반 사용자';
+        } else if (userData.role) {
+          userRole = userData.role;
+          // role에 따른 역할명 지정
+          if (userRole === 'admin') {
+            userRoleName = '관리자';
+          } else if (userRole === 'super-admin') {
+            userRoleName = '슈퍼 관리자';
+          }
+        }
+        
         // 사용자 권한 저장
-        localStorage.setItem('user_role', userData.role || 'user');
+        localStorage.setItem('user_role', userRole);
+        localStorage.setItem('user_role_name', userRoleName);
         
         if (forEdit) {
           // 프로필 수정 모달에 정보 채우기
@@ -504,8 +522,14 @@
           userBioElements[i].textContent = userData.bio || '자기소개';
         }
         
+        // 권한 한글명 표시
+        const userRoleNameElements = document.getElementsByClassName('user-role-name');
+        for (let i = 0; i < userRoleNameElements.length; i++) {
+          userRoleNameElements[i].textContent = userRoleName;
+        }
+        
         // 사용자 권한에 따라 탭 메뉴 구성
-        renderProfileTabs(userData.role || 'user');
+        renderProfileTabs(userRole);
         
       } catch (error) {
         console.error('프로필 정보 가져오기 오류:', error);
@@ -537,20 +561,67 @@
                                'U';
             profileColor.textContent = nameInitial.toUpperCase();
             
+            // 토큰에서 가져온 권한 정보 처리
+            let userRole = 'user'; // 기본값
+            let userRoleName = '일반 사용자'; // 기본값
+            
+            if (tokenPayload.auth && tokenPayload.auth.role) {
+              userRole = tokenPayload.auth.role;
+              
+              // role에 따른 역할명 지정
+              if (userRole === 'admin') {
+                userRoleName = '관리자';
+              } else if (userRole === 'super-admin') {
+                userRoleName = '슈퍼 관리자';
+              }
+            } else if (tokenPayload.role) {
+              userRole = tokenPayload.role;
+              
+              // role에 따른 역할명 지정
+              if (userRole === 'admin') {
+                userRoleName = '관리자';
+              } else if (userRole === 'super-admin') {
+                userRoleName = '슈퍼 관리자';
+              }
+            }
+            
             // 토큰에서 가져온 권한 저장
-            localStorage.setItem('user_role', tokenPayload.role || 'user');
+            localStorage.setItem('user_role', userRole);
+            localStorage.setItem('user_role_name', userRoleName);
+            
+            // 권한 한글명 표시
+            const userRoleNameElements = document.getElementsByClassName('user-role-name');
+            for (let i = 0; i < userRoleNameElements.length; i++) {
+              userRoleNameElements[i].textContent = userRoleName;
+            }
             
             // 토큰에서 가져온 권한으로 탭 메뉴 구성
-            renderProfileTabs(tokenPayload.role || 'user');
+            renderProfileTabs(userRole);
           } else {
             // 기본 권한으로 탭 메뉴 구성
             localStorage.setItem('user_role', 'user');
+            localStorage.setItem('user_role_name', '일반 사용자');
+            
+            // 권한 한글명 표시 (기본값)
+            const userRoleNameElements = document.getElementsByClassName('user-role-name');
+            for (let i = 0; i < userRoleNameElements.length; i++) {
+              userRoleNameElements[i].textContent = '일반 사용자';
+            }
+            
             renderProfileTabs('user');
           }
         } catch (e) {
           console.error('토큰 파싱 오류:', e);
           // 기본 권한으로 탭 메뉴 구성
           localStorage.setItem('user_role', 'user');
+          localStorage.setItem('user_role_name', '일반 사용자');
+          
+          // 권한 한글명 표시 (기본값)
+          const userRoleNameElements = document.getElementsByClassName('user-role-name');
+          for (let i = 0; i < userRoleNameElements.length; i++) {
+            userRoleNameElements[i].textContent = '일반 사용자';
+          }
+          
           renderProfileTabs('user');
         }
       }
@@ -690,8 +761,18 @@
         
         // 권한 정보 설정
         if (document.getElementById('userRole')) {
-          // 권한이 null이거나 빈 문자열인 경우 권한 없음 옵션 선택
-          const userRole = adminData.role || '';
+          // 기본값 설정 (권한 없음)
+          let userRole = '';
+          
+          // auth 배열에서 첫 번째 권한 값 확인
+          if (adminData.auth && adminData.auth.length > 0) {
+            userRole = adminData.auth[0].role || '';
+          }
+          // 기존 role 필드 확인 (하위 호환성)
+          else if (adminData.role) {
+            userRole = adminData.role;
+          }
+          
           document.getElementById('userRole').value = userRole;
         }
         
@@ -743,7 +824,8 @@
           email: `admin${adminId}@example.com`,
           phone: `010-1234-${adminId.padStart(4, '0')}`,
           bio: `관리자 정보를 가져오는 중 오류가 발생했습니다.`,
-          profile_color: `#000000`
+          profile_color: `#000000`,
+          auth: [{role: 'user', role_name: '일반 사용자'}]
         };
       }
     }
@@ -944,8 +1026,16 @@
         const tokenPayload = parseJwt(token);
         console.log('토큰 페이로드:', tokenPayload);
         
-        if (tokenPayload && tokenPayload.role) {
-          console.log('토큰에서 파싱한 권한:', tokenPayload.role);
+        // 새로운 auth 구조 체크
+        if (tokenPayload && tokenPayload.auth && tokenPayload.auth.role) {
+          console.log('토큰에서 파싱한 권한(auth):', tokenPayload.auth.role);
+          // 토큰에서 파싱한 권한을 로컬 스토리지에 저장
+          localStorage.setItem('user_role', tokenPayload.auth.role);
+          return tokenPayload.auth.role;
+        }
+        // 기존 role 필드 체크
+        else if (tokenPayload && tokenPayload.role) {
+          console.log('토큰에서 파싱한 권한(role):', tokenPayload.role);
           // 토큰에서 파싱한 권한을 로컬 스토리지에 저장
           localStorage.setItem('user_role', tokenPayload.role);
           return tokenPayload.role;
@@ -981,9 +1071,22 @@
       
       // 권한 값 가져오기 (권한 선택 필드가 표시된 경우에만)
       const roleSelectContainer = document.getElementById('roleSelectContainer');
-      let role = null;
+      let auth = null;
       if (roleSelectContainer.style.display !== 'none') {
-        role = document.getElementById('userRole').value;
+        const role = document.getElementById('userRole').value;
+        
+        // 역할명 지정
+        let role_name = '';
+        if (role === 'user') {
+          role_name = '일반 사용자';
+        } else if (role === 'admin') {
+          role_name = '관리자';
+        } else if (role === 'super-admin') {
+          role_name = '슈퍼 관리자';
+        }
+        
+        // auth 배열 구성
+        auth = [{ role, role_name }];
       }
       
       // 디버깅 정보
@@ -995,7 +1098,7 @@
         phone,
         bio,
         profileColor,
-        role
+        auth
       });
       
       // 필수 입력값 검증
@@ -1059,9 +1162,9 @@
         }
         
         // 권한이 선택된 경우만 포함 (super-admin만 권한 변경 가능)
-        if (role !== null && currentUserRole === 'super-admin') {
-          standardData.role = role;
-          console.log('권한 변경:', role);
+        if (auth !== null && currentUserRole === 'super-admin') {
+          standardData.auth = auth;
+          console.log('권한 변경:', auth);
         }
         
         // API URL 정의
